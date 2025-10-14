@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ZOD_CA_DOCUMENTS_SCAN_SRV" xml:lang="es" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <Annotation Term="Core.SchemaVersion" String="1.0.0" xmlns="http://docs.oasis-open.org/odata/ns/edm"/>
+            <EntityType Name="CheckUser" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Username"/>
+                </Key>
+                <Property Name="Username" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Usuario" sap:creatable="false" sap:updatable="false"/>
+            </EntityType>
+            <EntityType Name="ScanDocsList" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Name"/>
+                </Key>
+                <Property Name="Name" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Nombre"/>
+                <Property Name="Counter" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
+                <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Car.20"/>
+                <Property Name="Object_Type" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
+                <NavigationProperty Name="ToImagesNav" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" FromRole="FromRole_ScanDocsListToItem" ToRole="ToRole_ScanDocsListToItem"/>
+                <NavigationProperty Name="NavDestination" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" FromRole="ToRole_AssocScanDocsListDestination" ToRole="FromRole_AssocScanDocsListDestination"/>
+            </EntityType>
+            <EntityType Name="DestinationAssign" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Destination"/>
+                </Key>
+                <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Destino" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="Gos_object" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="Description" Type="Edm.String" MaxLength="100" sap:unicode="false" sap:label="Carácter 100" sap:creatable="false" sap:updatable="false"/>
+                <NavigationProperty Name="NavRequiredFields" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocDestinationRequiredFields" FromRole="FromRole_AssocDestinationRequiredFields" ToRole="ToRole_AssocDestinationRequiredFields"/>
+            </EntityType>
+            <EntityType Name="RequiredFields" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Destination"/>
+                    <PropertyRef Name="Field_id"/>
+                </Key>
+                <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Car.20"/>
+                <Property Name="Field_id" Type="Edm.String" Nullable="false" MaxLength="8" sap:unicode="false" sap:label="Evento"/>
+                <Property Name="Table" Type="Edm.String" MaxLength="30" sap:unicode="false" sap:label="Nombre de tabla"/>
+                <Property Name="TableField" Type="Edm.String" MaxLength="30" sap:unicode="false" sap:label="Nombre de campo"/>
+                <Property Name="Type" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="Tipo de datos ABAP"/>
+                <Property Name="Description" Type="Edm.String" MaxLength="100" sap:unicode="false" sap:label="Carácter 100"/>
+                <Property Name="Length" Type="Edm.String" MaxLength="6" sap:unicode="false" sap:label="Long. interna"/>
+                <Property Name="InputValue" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Input" sap:filterable="false"/>
+            </EntityType>
+            <EntityType Name="ObjectType" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Object_Type"/>
+                </Key>
+                <Property Name="Object_Type" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:filterable="false"/>
+                <Property Name="Description" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false"/>
+            </EntityType>
+            <EntityType Name="ScanDocsItem" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Name"/>
+                    <PropertyRef Name="Counterimg"/>
+                </Key>
+                <Property Name="Name" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Nombre"/>
+                <Property Name="Counterimg" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
+                <Property Name="Input" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Input"/>
+                <Property Name="Doctype" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
+                <Property Name="Length" Type="Edm.String" sap:unicode="false" sap:label="Longitud campo"/>
+                <Property Name="Imagen" Type="Edm.String" sap:unicode="false" sap:label="Imagen CC"/>
+                <Property Name="Mimetype" Type="Edm.String" sap:unicode="false" sap:label="Mimetype"/>
+            </EntityType>
+            <EntityType Name="PdfList" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="DocId"/>
+                </Key>
+                <Property Name="DocId" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="ID del documento" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="ObjectDescription" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Descripción TipoObj" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TypeDoc" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="ObjKey" Type="Edm.String" Nullable="false" MaxLength="70" sap:unicode="false" sap:label="Clave del Documento" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FileName" Type="Edm.String" Nullable="false" MaxLength="80" sap:unicode="false" sap:label="Archivo" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Username" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Usuario" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="ModifiedAt" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Fecha" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="Error" Type="Edm.Boolean" sap:unicode="false" sap:label="Error" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="ErrorMessage" Type="Edm.String" sap:unicode="false" sap:label="ErrorMessage" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="MimeType" Type="Edm.String" Nullable="false" MaxLength="50" sap:unicode="false" sap:label="MimeType" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="Pdf" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Pdf" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <Association Name="AssocDestinationRequiredFields" sap:content-version="1">
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" Multiplicity="0..1" Role="FromRole_AssocDestinationRequiredFields"/>
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.RequiredFields" Multiplicity="*" Role="ToRole_AssocDestinationRequiredFields"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_AssocDestinationRequiredFields">
+                        <PropertyRef Name="Destination"/>
+                    </Principal>
+                    <Dependent Role="ToRole_AssocDestinationRequiredFields">
+                        <PropertyRef Name="Destination"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="AssocScanDocsListDestination" sap:content-version="1">
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" Multiplicity="1" Role="FromRole_AssocScanDocsListDestination"/>
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsList" Multiplicity="1" Role="ToRole_AssocScanDocsListDestination"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_AssocScanDocsListDestination">
+                        <PropertyRef Name="Destination"/>
+                    </Principal>
+                    <Dependent Role="ToRole_AssocScanDocsListDestination">
+                        <PropertyRef Name="Destination"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="ScanDocsListToItem" sap:content-version="1">
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsList" Multiplicity="1" Role="FromRole_ScanDocsListToItem"/>
+                <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsItem" Multiplicity="*" Role="ToRole_ScanDocsListToItem"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_ScanDocsListToItem">
+                        <PropertyRef Name="Name"/>
+                    </Principal>
+                    <Dependent Role="ToRole_ScanDocsListToItem">
+                        <PropertyRef Name="Name"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <EntityContainer Name="ZOD_CA_DOCUMENTS_SCAN_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+                <EntitySet Name="CheckUserSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.CheckUser" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="ScanDocsListSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="DestinationAssignSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="RequiredFieldsSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.RequiredFields" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="ObjectTypeSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.ObjectType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="ScanDocsItemSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsItem" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
+                <EntitySet Name="PdfListSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+                <AssociationSet Name="ScanDocsListToItemSet" Association="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="ScanDocsListSet" Role="FromRole_ScanDocsListToItem"/>
+                    <End EntitySet="ScanDocsItemSet" Role="ToRole_ScanDocsListToItem"/>
+                </AssociationSet>
+                <AssociationSet Name="AssocDestinationRequiredFieldsSet" Association="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocDestinationRequiredFields" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="DestinationAssignSet" Role="FromRole_AssocDestinationRequiredFields"/>
+                    <End EntitySet="RequiredFieldsSet" Role="ToRole_AssocDestinationRequiredFields"/>
+                </AssociationSet>
+                <AssociationSet Name="AssocScanDocsListDestinationSet" Association="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="DestinationAssignSet" Role="FromRole_AssocScanDocsListDestination"/>
+                    <End EntitySet="ScanDocsListSet" Role="ToRole_AssocScanDocsListDestination"/>
+                </AssociationSet>
+            </EntityContainer>
+            <atom:link rel="self" href="http://eubcn1itsv005.ferrergrupo.inet:8000/sap/opu/odata/sap/ZOD_CA_DOCUMENTS_SCAN_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+            <atom:link rel="latest-version" href="http://eubcn1itsv005.ferrergrupo.inet:8000/sap/opu/odata/sap/ZOD_CA_DOCUMENTS_SCAN_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
