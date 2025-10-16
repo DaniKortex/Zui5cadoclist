@@ -1,7 +1,117 @@
 <mvc:View controllerName="zui5cadoclist.controller.DocumentList"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m">
-    <Page id="page" title="{i18n>title}">
-        <content />
+    <Page id="idDocumentListPage" title="{i18n>title}" showNavButton="false">
+        <content>
+            <Panel id="idDocumentsPanel" headerText="{i18n>documentsListTitle}" class="sapUiResponsiveMargin">
+                <content>
+                    <Toolbar id="idHeaderToolbar">
+                        <Title id="idDocumentsTitle" text="{i18n>documentsCount}" level="H2"/>
+                        <ToolbarSpacer id="idSpacerToolbar1"/>
+                        <SearchField id="idSearchField" 
+                                    width="20rem" 
+                                    placeholder="{i18n>searchPlaceholder}" 
+                                    search=".onSearch"/>
+                        <ToolbarSeparator id="idSeparatorToolbar1"/>
+                        <Button id="idRefreshButton" 
+                               icon="sap-icon://refresh" 
+                               tooltip="{i18n>refresh}" 
+                               press=".onRefresh"/>
+                    </Toolbar>
+                    
+                    <!-- Documents Table -->
+                    <Table id="documentsTable" 
+                           items="{/PdfListSet}"
+                           growing="true" 
+                           growingThreshold="50"
+                           busyIndicatorDelay="{viewModel>/delay}"
+                           busy="{viewModel>/busy}"
+                           mode="SingleSelect"
+                           itemPress=".onItemPress">
+                        <headerToolbar>
+                            <Toolbar id="idTableToolbar">
+                                <Label id="idTableLabel" text="{i18n>documentsTableHeader} ({viewModel>/itemCount})"/>
+                                <ToolbarSpacer id="idSpacerToolbar2"/>
+                            </Toolbar>
+                        </headerToolbar>
+                        
+                        <columns>
+                            <Column id="idDocIdColumn" width="12em">
+                                <HBox id="idDocIdHeaderHBox">
+                                    <Text id="idDocIdHeaderText" text="{i18n>docId}"/>
+                                    <Button id="idSortDocIdButton" 
+                                           icon="{path: 'viewModel>/sortOrderDocId', formatter: '.formatSortIcon'}" 
+                                           tooltip="{i18n>sort}" 
+                                           press=".onSortDocId"
+                                           type="Transparent"/>
+                                </HBox>
+                            </Column>
+                            <Column id="idFileNameColumn">
+                                <Text id="idFileNameHeaderText" text="{i18n>fileName}"/>
+                            </Column>
+                            <Column id="idObjectDescColumn">
+                                <Text id="idObjectDescHeaderText" text="{i18n>objectDescription}"/>
+                            </Column>
+                            <Column id="idUsernameColumn" width="10em">
+                                <Text id="idUsernameHeaderText" text="{i18n>username}"/>
+                            </Column>
+                            <Column id="idModifiedAtColumn" width="12em">
+                                <HBox id="idModifiedAtHeaderHBox">
+                                    <Text id="idModifiedAtHeaderText" text="{i18n>modifiedAt}"/>
+                                    <Button id="idSortModifiedAtButton" 
+                                           icon="{path: 'viewModel>/sortOrderModifiedAt', formatter: '.formatSortIcon'}" 
+                                           tooltip="{i18n>sort}" 
+                                           press=".onSortModifiedAt"
+                                           type="Transparent"/>
+                                </HBox>
+                            </Column>
+                            <Column id="idStatusColumn" width="8em">
+                                <Text id="idStatusHeaderText" text="{i18n>status}"/>
+                            </Column>
+                            <Column id="idActionsColumn" width="8em">
+                                <Text id="idActionsHeaderText" text="{i18n>actions}"/>
+                            </Column>
+                        </columns>
+                        
+                        <items>
+                            <ColumnListItem id="idDocumentListItem" press=".onItemPress">
+                                <cells>
+                                    <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}" text="{TypeObj}"/>
+                                    <Text id="idFileNameText" text="{FileName}" maxLines="2"/>
+                                    <Text id="idObjectDescText" text="{ObjectDescription}" maxLines="2"/>
+                                    <Text id="idUsernameText" text="{Username}"/>
+                                    <Text id="idModifiedAtText" text="{
+                                            path: 'ModifiedAt',
+                                            type: 'sap.ui.model.odata.type.DateTime',
+                                            formatOptions: {
+                                                pattern: 'dd.MM.yyyy HH:mm'
+                                            }
+                                        }"/>
+                                    <ObjectStatus id="idErrorObjectStatus" 
+                                                  text="{path: 'Error', formatter: '.formatBoolean'}"
+                                                  state="{path: 'Error', formatter: '.formatErrorState'}"/>
+                                    <Button id="idDownloadButton" 
+                                           icon="sap-icon://download" 
+                                           tooltip="{i18n>download}" 
+                                           press=".onDownloadDocument"
+                                           type="Transparent"/>
+                                </cells>
+                            </ColumnListItem>
+                        </items>
+                    </Table>
+                </content>
+            </Panel>
+        </content>
+        <footer>
+            <Toolbar id="idFooterToolbar">
+                <ToolbarSpacer id="idFooterSpacer"/>
+                <Button id="idVisualizeButton" 
+                       text="{i18n>visualize}" 
+                       icon="sap-icon://pdf-reader"
+                       press=".onVisualizeDocument"
+                       enabled="{viewModel>/hasSelection}"
+                       type="Emphasized"/>
+            </Toolbar>
+        </footer>
     </Page>
 </mvc:View>

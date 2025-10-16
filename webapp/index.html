@@ -17,11 +17,31 @@
         data-sap-ui-resourceroots='{
             "zui5cadoclist": "./"
         }'
-        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport"
         data-sap-ui-compatVersion="edge"
         data-sap-ui-async="true"
         data-sap-ui-frameOptions="trusted"
     ></script>
+    <script>
+        sap.ui.getCore().attachInit(function () {
+            // Check if we should use mock data (when running locally)
+            if (window.location.hostname === "localhost" || window.location.search.indexOf("sap-ui-mockserver") > -1) {
+                sap.ui.require([
+                    "zui5cadoclist/localService/mockserver"
+                ], function (mockserver) {
+                    mockserver.init();
+                    // Initialize the application after mock server
+                    sap.ui.require([
+                        "sap/ui/core/ComponentSupport"
+                    ]);
+                });
+            } else {
+                // Initialize normally for production
+                sap.ui.require([
+                    "sap/ui/core/ComponentSupport"
+                ]);
+            }
+        });
+    </script>
 </head>
 <body class="sapUiBody sapUiSizeCompact" id="content">
     <div
