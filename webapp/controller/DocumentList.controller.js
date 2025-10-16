@@ -3,9 +3,10 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "sap/ui/model/Sorter"
+    "sap/ui/model/Sorter",
+    "sap/ui/core/Fragment"
 ],
-function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
+function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.DocumentList", {
@@ -48,6 +49,12 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
 
             // Try to read data directly to test connection
             this._testDataConnection();
+
+            // Wire SmartFilterBar search event
+            var oSFB = this.byId("idSmartFilterBar");
+            if (oSFB) {
+                oSFB.attachSearch(this.onSmartFilterBarSearch, this);
+            }
         },
 
         /**
@@ -76,9 +83,9 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
          */
         onRefresh: function () {
             console.log("Refresh button clicked");
-            var oTable = this.byId("documentsTable");
-            if (oTable && oTable.getBinding("items")) {
-                oTable.getBinding("items").refresh();
+            var oTable = this.byId("idDocumentsTable");
+            if (oTable && oTable.getBinding("rows")) {
+                oTable.getBinding("rows").refresh();
                 // Clear any existing sorting
                 var oViewModel = this.getModel("viewModel");
                 oViewModel.setProperty("/sortOrderDocId", undefined);
@@ -92,44 +99,23 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
          * @private
          */
         _debugTableState: function() {
-            var oTable = this.byId("documentsTable");
+            var oTable = this.byId("idDocumentsTable");
             console.log("=== TABLE DEBUG INFO ===");
             console.log("Table found: ", !!oTable);
             if (oTable) {
-                var oBinding = oTable.getBinding("items");
+                var oBinding = oTable.getBinding("rows");
                 console.log("Binding found: ", !!oBinding);
                 if (oBinding) {
                     console.log("Binding path: ", oBinding.getPath());
                     console.log("Binding length: ", oBinding.getLength());
                     console.log("Current sorters: ", oBinding.aSorters);
                 }
-                console.log("Table items count: ", oTable.getItems().length);
+                console.log("Visible row count: ", oTable.getVisibleRowCount());
             }
             console.log("=== END DEBUG INFO ===");
         },
 
-        /**
-         * Event handler for table item press
-         * @public
-         * @param {sap.ui.base.Event} oEvent the press event
-         */
-        onItemPress: function (oEvent) {
-            console.log("Item pressed");
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oViewModel = this.getModel("viewModel");
-            
-            if (oBindingContext) {
-                var sDocId = oBindingContext.getProperty("DocId");
-                var sFileName = oBindingContext.getProperty("FileName");
-                
-                // Update selection state
-                oViewModel.setProperty("/hasSelection", true);
-                oViewModel.setProperty("/selectedItem", oBindingContext.getObject());
-                
-                console.log("Selected document: ", oBindingContext.getObject());
-                this.showMessage(this.getResourceBundle().getText("documentSelected", [sDocId, sFileName]));
-            }
-        },
+        // onItemPress removed: sap.ui.table.Table uses row selection instead
 
         /**
          * Event handler for visualize button
@@ -159,21 +145,30 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
          */
         _showPdfDialog: function (oSelectedItem) {
             var that = this;
-            
+            var fnOpen = function(oDialog){
+                // Set the PDF data to the dialog model
+                var oPdfModel = new JSONModel({
+                    title: oSelectedItem.FileName,
+                    docId: oSelectedItem.DocId,
+                    pdfData: "data:application/pdf;base64," + oSelectedItem.Pdf
+                });
+                oDialog.setModel(oPdfModel, "pdf");
+                oDialog.open();
+            };
+
             if (!this._pdfDialog) {
-                this._pdfDialog = sap.ui.xmlfragment("zui5cadoclist.view.fragments.PdfViewer", this);
-                this.getView().addDependent(this._pdfDialog);
+                Fragment.load({
+                    name: "zui5cadoclist.view.fragments.PdfViewer",
+                    id: this.getView().getId(),
+                    controller: this
+                }).then(function(oDialog){
+                    this._pdfDialog = oDialog;
+                    this.getView().addDependent(this._pdfDialog);
+                    fnOpen(this._pdfDialog);
+                }.bind(this));
+            } else {
+                fnOpen(this._pdfDialog);
             }
-            
-            // Set the PDF data to the dialog model
-            var oPdfModel = new JSONModel({
-                title: oSelectedItem.FileName,
-                docId: oSelectedItem.DocId,
-                pdfData: "data:application/pdf;base64," + oSelectedItem.Pdf
-            });
-            
-            this._pdfDialog.setModel(oPdfModel, "pdf");
-            this._pdfDialog.open();
         },
 
         /**
@@ -266,33 +261,35 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
             this._sortTable("ModifiedAt");
         },
 
+        // onSearch removed: we rely on SmartFilterBar's search
+
         /**
-         * Event handler when a table search is triggered
-         * @public
-         * @param {sap.ui.base.Event} oEvent the search event
+         * SmartFilterBar search event: collect SFB filters and custom checkbox, apply to rows binding
          */
-        onSearch: function (oEvent) {
-            console.log("Search triggered");
-            var sQuery = oEvent.getSource().getValue();
-            var oTable = this.byId("documentsTable");
-            var oBinding = oTable.getBinding("items");
-
-            if (!oBinding) {
-                console.log("No binding available on table");
-                return;
+        onSmartFilterBarSearch: function () {
+            var oSFB = this.byId("idSmartFilterBar");
+            var aFilters = oSFB ? (oSFB.getFilters() || []) : [];
+            // custom checkbox
+            var oOnlyErrors = this.byId("idSFBOnlyErrorsCheck");
+            if (oOnlyErrors && oOnlyErrors.getSelected()) {
+                aFilters.push(new Filter("Error", FilterOperator.EQ, true));
             }
-
-            if (sQuery && sQuery.length > 0) {
-                var aFilters = [
-                    new Filter("FileName", FilterOperator.Contains, sQuery),
-                    new Filter("ObjectDescription", FilterOperator.Contains, sQuery),
-                    new Filter("Username", FilterOperator.Contains, sQuery),
-                    new Filter("DocId", FilterOperator.Contains, sQuery)
-                ];
-                var oFilter = new Filter(aFilters, false);
-                oBinding.filter([oFilter]);
-            } else {
-                oBinding.filter([]);
+            // basic search value -> OR across several text fields
+            if (oSFB && oSFB.getBasicSearchValue) {
+                var sQuery = (oSFB.getBasicSearchValue() || "").trim();
+                if (sQuery) {
+                    aFilters.push(new Filter([
+                        new Filter("FileName", FilterOperator.Contains, sQuery),
+                        new Filter("ObjectDescription", FilterOperator.Contains, sQuery),
+                        new Filter("Username", FilterOperator.Contains, sQuery),
+                        new Filter("DocId", FilterOperator.Contains, sQuery)
+                    ], false));
+                }
+            }
+            var oTable = this.byId("idDocumentsTable");
+            var oBinding = oTable && oTable.getBinding("rows");
+            if (oBinding) {
+                oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
             }
         },
 
@@ -303,10 +300,10 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
          */
         _sortTable: function (sField) {
             console.log("Sorting by field: " + sField);
-            var oTable = this.byId("documentsTable");
-            var oBinding = oTable.getBinding("items");
+            var oTable = this.byId("idDocumentsTable");
+            var oBinding = oTable.getBinding("rows");
             var oViewModel = this.getModel("viewModel");
-            
+
             if (!oBinding) {
                 console.error("No binding found on table");
                 this.showErrorMessage("No se pudo acceder a los datos de la tabla");
@@ -318,7 +315,7 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
             // Get current sort state for this field
             var sSortKey = "sortOrder" + sField;
             var bCurrentDescending = oViewModel.getProperty("/" + sSortKey);
-            
+
             // Toggle sort order (undefined -> false -> true -> false...)
             var bNewDescending;
             if (bCurrentDescending === undefined || bCurrentDescending === null) {
@@ -326,12 +323,12 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
             } else {
                 bNewDescending = !bCurrentDescending; // Toggle
             }
-            
+
             console.log("Sort order - Current: " + bCurrentDescending + ", New: " + bNewDescending);
-            
+
             // Update view model
             oViewModel.setProperty("/" + sSortKey, bNewDescending);
-            
+
             // Reset other sort states
             if (sField === "DocId") {
                 oViewModel.setProperty("/sortOrderModifiedAt", undefined);
@@ -343,24 +340,47 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter) {
                 // Create sorter
                 var oSorter = new Sorter(sField, bNewDescending);
                 console.log("Created sorter: ", oSorter);
-                
+
                 // Apply sort to binding
                 oBinding.sort([oSorter]);
                 console.log("Sort applied successfully");
-                
+
                 // Debug after applying sort
                 this._debugTableState();
-                
+
                 // Show success message
                 var sOrder = bNewDescending ? this.getResourceBundle().getText("descending") : this.getResourceBundle().getText("ascending");
                 var sFieldText = sField === "DocId" ? this.getResourceBundle().getText("docId") : this.getResourceBundle().getText("modifiedAt");
                 var sMessage = this.getResourceBundle().getText("sortApplied", [sFieldText, sOrder]);
                 this.showMessage(sMessage);
-                
+
             } catch (oError) {
                 console.error("Error applying sort: ", oError);
                 this.showErrorMessage("Error al aplicar el ordenamiento: " + oError.message);
             }
+        },
+
+        /**
+         * Apply filters from the top filter bar (Only Errors, Username contains, Date Range on ModifiedAt)
+         */
+        // Removed manual filter bar handlers (onApplyFilters, onClearFilters)
+        /**
+         * Handle row selection change for sap.ui.table.Table
+         */
+        onRowSelectionChange: function (oEvent) {
+            var oTable = this.byId("idDocumentsTable");
+            var aSel = oTable.getSelectedIndices();
+            var oViewModel = this.getModel("viewModel");
+            if (aSel && aSel.length > 0) {
+                var oCtx = oTable.getContextByIndex(aSel[0]);
+                if (oCtx) {
+                    oViewModel.setProperty("/hasSelection", true);
+                    oViewModel.setProperty("/selectedItem", oCtx.getObject());
+                    return;
+                }
+            }
+            oViewModel.setProperty("/hasSelection", false);
+            oViewModel.setProperty("/selectedItem", null);
         }
     });
 });
