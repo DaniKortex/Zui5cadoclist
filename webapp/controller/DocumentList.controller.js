@@ -215,13 +215,34 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
         },
 
         /**
-         * Formatter for error state
+         * Formatter for error state (handles ABAP true-like values)
          * @public
-         * @param {boolean} bError error flag
-         * @returns {string} state value
+         * @param {*} v value from OData (boolean true/false or 'X'/' ')
          */
-        formatErrorState: function (bError) {
-            return bError ? "Error" : "Success";
+        formatErrorState: function (v) {
+            return this._isTrueLike(v) ? "Error" : "Success";
+        },
+
+        /**
+         * Formatter for error text: show "Error" only when true-like; otherwise empty
+         * @public
+         * @param {*} v value from OData
+         */
+        formatErrorText: function (v) {
+            return this._isTrueLike(v) ? this.getResourceBundle().getText("error") : "";
+        },
+
+        /**
+         * Helper to normalize ABAP/JS truthy representations: true, 1, '1', 'X', 'x', 'true'
+         * @private
+         */
+        _isTrueLike: function (v) {
+            if (v === true || v === 1) { return true; }
+            if (typeof v === "string") {
+                var s = v.trim().toLowerCase();
+                return s === "x" || s === "1" || s === "true";
+            }
+            return false;
         },
 
         /**
@@ -289,6 +310,9 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
             var oTable = this.byId("idDocumentsTable");
             var oBinding = oTable && oTable.getBinding("rows");
             if (oBinding) {
+                // Clear any previous Control filters (e.g., from column menu) to avoid conflicts
+                oBinding.filter([], sap.ui.model.FilterType.Control);
+                // Apply SmartFilterBar filters as Application filters (server-side)
                 oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
             }
         },

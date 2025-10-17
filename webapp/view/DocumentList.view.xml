@@ -18,19 +18,24 @@
                     <!-- Smart Filter Bar (basic) -->
                     <smartFilterBar:SmartFilterBar id="idSmartFilterBar"
                                                   entitySet="PdfListSet"
-                                                  useToolbar="true"
-                                                  enableBasicSearch="true"/>
+                                                  useToolbar="true">
+                        <smartFilterBar:controlConfiguration>
+                            <smartFilterBar:ControlConfiguration id="idDocIdControlConfiguration" key="DocId" visible="true" visibleInAdvancedArea="false"/>
+                            <smartFilterBar:ControlConfiguration id="idUsernameControlConfiguration" key="Username" visible="true" visibleInAdvancedArea="false"/>
+                            <smartFilterBar:ControlConfiguration id="idTypeDocControlConfiguration" key="TypeDoc" visible="true" visibleInAdvancedArea="false"/>
+                        </smartFilterBar:controlConfiguration>
+                    </smartFilterBar:SmartFilterBar>
                     
                     <!-- Documents sap.ui.table.Table -->
                     <table:Table id="idDocumentsTable"
-                                 rows="{/PdfListSet}"
+                                 rows="{ path: '/PdfListSet', parameters: { operationMode: 'Server' } }"
                                  busyIndicatorDelay="{viewModel>/delay}"
                                  busy="{viewModel>/busy}"
                                  selectionMode="Single"
                                   selectionBehavior="Row"
                                  rowSelectionChange=".onRowSelectionChange">
                         <table:columns>
-                            <table:Column id="idDocIdColumn" width="12rem">
+                            <table:Column id="idDocIdColumn" width="12rem" sortProperty="DocId">
                                 <Label id="idDocIdColLabel" text="{i18n>docId}"/>
                                 <table:label>
                                     <HBox id="idDocIdHeaderHBox">
@@ -38,7 +43,7 @@
                                     </HBox>
                                 </table:label>
                                 <table:template>
-                                    <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}" text="{TypeObj}"/>
+                                    <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}"/>
                                 </table:template>
                             </table:Column>
                             <table:Column id="idFileNameColumn" width="16rem">
@@ -59,7 +64,7 @@
                                     <Text id="idUsernameText" text="{Username}"/>
                                 </table:template>
                             </table:Column>
-                            <table:Column id="idModifiedAtColumn" width="14rem">
+                            <table:Column id="idModifiedAtColumn" width="14rem" sortProperty="ModifiedAt">
                                 <table:label>
                                     <HBox id="idModifiedAtHeaderHBox">
                                         <Text id="idModifiedAtHeaderText" text="{i18n>modifiedAt}"/>
@@ -69,10 +74,10 @@
                                     <Text id="idModifiedAtText" text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"/>
                                 </table:template>
                             </table:Column>
-                            <table:Column id="idStatusColumn" width="10rem">
-                                <Label id="idStatusLabel" text="{i18n>status}"/>
+                            <table:Column id="idErrorColumn" width="10rem">
+                                <Label id="idErrorLabel" text="{i18n>error}"/>
                                 <table:template>
-                                    <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatBoolean'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
+                                    <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatErrorText'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
                                 </table:template>
                             </table:Column>
                             <table:Column id="idActionsColumn" width="8rem">
