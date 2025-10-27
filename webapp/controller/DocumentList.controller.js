@@ -118,6 +118,85 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
         // onItemPress removed: sap.ui.table.Table uses row selection instead
 
         /**
+         * Formatter para mostrar el icono de edición solo si hay error
+         */
+        formatEditVisible: function (v) {
+            return this._isTrueLike(v);
+        },
+
+        /**
+         * Handler para el botón de edición: abre el diálogo de edición con los datos de la línea
+         */
+        onEditDocument: function(oEvent) {
+            var oSource = oEvent.getSource();
+            var oCtx = oSource.getBindingContext();
+            var oData = oCtx.getObject();
+            var that = this;
+
+            // Cargar fragmento si no está cargado
+            if (!this._editDialog) {
+                Fragment.load({
+                    name: "zui5cadoclist.view.EditDialog",
+                    controller: this
+                }).then(function(oDialog) {
+                    that._editDialog = oDialog;
+                    that.getView().addDependent(oDialog);
+                    that._openEditDialog(oData);
+                });
+            } else {
+                this._openEditDialog(oData);
+            }
+        },
+
+        /**
+         * Abre el diálogo de edición y vincula los datos
+         */
+        _openEditDialog: function(oData) {
+            // Usar un modelo JSON temporal para el diálogo
+            var oEditModel = new JSONModel(Object.assign({}, oData));
+            this._editDialog.setModel(oEditModel, "edit");
+            this._editDialog.open();
+        },
+
+        /**
+         * Handler para guardar los cambios del diálogo de edición
+         */
+        onEditDialogSave: function() {
+            var oDialog = this._editDialog;
+            var oEditModel = oDialog.getModel("edit");
+            var oData = oEditModel.getData();
+            var oModel = this.getModel();
+            var that = this;
+
+            // Construir la key para el update
+            var sPath = oModel.createKey("/PdfListSet", { DocId: oData.DocId });
+
+            oModel.update(sPath, oData, {
+                success: function() {
+                    that.showSuccessMessage("Datos actualizados correctamente");
+                    oDialog.close();
+                    // Refrescar tabla
+                    var oTable = that.byId("idDocumentsTable");
+                    if (oTable && oTable.getBinding("rows")) {
+                        oTable.getBinding("rows").refresh();
+                    }
+                },
+                error: function(oError) {
+                    that.showErrorMessage("Error al actualizar los datos");
+                }
+            });
+        },
+
+        /**
+         * Handler para cancelar el diálogo de edición
+         */
+        onEditDialogCancel: function() {
+            if (this._editDialog) {
+                this._editDialog.close();
+            }
+        },
+
+        /**
          * Event handler for visualize button
          * @public
          */

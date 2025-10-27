@@ -1,0 +1,36 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+  <Dialog id="editDialog" title="Editar Documento" draggable="true" resizable="true" contentWidth="400px" contentHeight="auto">
+    <VBox>
+      <Label text="ID Documento" labelFor="docidInput"/>
+      <Input id="docidInput" value="{edit>/DocId}" editable="false"/>
+      <Label text="Tipo de Objeto" labelFor="typeobjInput"/>
+      <Input id="typeobjInput" value="{edit>/TypeObj}"/>
+      <Label text="Descripción" labelFor="descriptionInput"/>
+      <Input id="descriptionInput" value="{edit>/ObjectDescription}"/>
+      <Label text="Tipo de Documento" labelFor="typedocInput"/>
+      <Input id="typedocInput" value="{edit>/TypeDoc}"/>
+      <Label text="Clave Objeto" labelFor="objkeyInput"/>
+      <Input id="objkeyInput" value="{edit>/ObjKey}"/>
+      <Label text="Nombre Archivo" labelFor="fileNameInput"/>
+      <Input id="fileNameInput" value="{edit>/FileName}"/>
+      <Label text="Usuario" labelFor="usernameInput"/>
+  <Input id="usernameInput" value="{edit>/Username}" editable="false"/>
+      <Label text="Fecha Modificación" labelFor="modifiedAtInput"/>
+      <Input id="modifiedAtInput" value="{edit>/ModifiedAt}"/>
+      <Label text="Error" labelFor="errorInput"/>
+  <Input id="errorInput" value="{edit>/Error}" editable="false"/>
+      <Label text="Mensaje Error" labelFor="errorMessageInput"/>
+      <Input id="errorMessageInput" value="{edit>/ErrorMessage}"/>
+      <Label text="MimeType" labelFor="mimeTypeInput"/>
+  <Input id="mimeTypeInput" value="{edit>/MimeType}" editable="false"/>
+      <Label text="Estado" labelFor="statusInput"/>
+      <Input id="statusInput" value="{edit>/Status}"/>
+    </VBox>
+    <beginButton>
+      <Button text="Guardar" type="Emphasized" press=".onEditDialogSave"/>
+    </beginButton>
+    <endButton>
+      <Button text="Cancelar" press=".onEditDialogCancel"/>
+    </endButton>
+  </Dialog>
+</core:FragmentDefinition>

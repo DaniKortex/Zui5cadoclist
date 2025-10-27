@@ -12,7 +12,7 @@ sap.ui.define([
 
         return UIComponent.extend("zui5cadoclist.Component", {
             metadata: {
-                manifest: "json"
+                  manifest: "json", config: { fullWidth: true }
             },
 
             /**

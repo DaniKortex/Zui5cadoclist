@@ -83,7 +83,15 @@
                             <table:Column id="idActionsColumn" width="8rem">
                                 <Label id="idActionsLabel" text="{i18n>actions}"/>
                                 <table:template>
-                                    <Button id="idDownloadButton" icon="sap-icon://download" type="Transparent" tooltip="{i18n>download}" press=".onDownloadDocument"/>
+                                    <HBox>
+                                        <Button id="idEditButton"
+                                            icon="sap-icon://edit"
+                                            type="Transparent"
+                                            tooltip="Editar"
+                                            visible="{path: 'Error', formatter: '.formatEditVisible'}"
+                                            press=".onEditDocument"/>
+                                        <Button id="idDownloadButton" icon="sap-icon://download" type="Transparent" tooltip="{i18n>download}" press=".onDownloadDocument"/>
+                                    </HBox>
                                 </table:template>
                             </table:Column>
                         </table:columns>
