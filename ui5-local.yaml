@@ -11,7 +11,7 @@ framework:
     - name: sap.m
     - name: sap.ui.core
     - name: sap.ushell
-    - name: themelib_sap_fiori_3
+    - name: themelib_sap_horizon
 server:
   customMiddleware:
     - name: fiori-tools-appreload
@@ -24,7 +24,7 @@ server:
       afterMiddleware: fiori-tools-appreload
       configuration:
         component: zui5cadoclist
-        ui5Theme: sap_fiori_3
+        ui5Theme: sap_horizon
     - name: fiori-tools-proxy
       afterMiddleware: compression
       configuration:

@@ -35,6 +35,7 @@
                                   selectionBehavior="Row"
                                  rowSelectionChange=".onRowSelectionChange">
                         <table:columns>
+                            <!-- ID -->
                             <table:Column id="idDocIdColumn" width="12rem" sortProperty="DocId">
                                 <Label id="idDocIdColLabel" text="{i18n>docId}"/>
                                 <table:label>
@@ -46,24 +47,42 @@
                                     <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}"/>
                                 </table:template>
                             </table:Column>
-                            <table:Column id="idFileNameColumn" width="16rem">
-                                <Label id="idFileNameColLabel" text="{i18n>fileName}"/>
+                            <!-- Destino -->
+                            <table:Column id="idDestinationColumn" width="10rem">
+                                <Label id="idDestinationLabel" text="Destino"/>
                                 <table:template>
-                                    <Text id="idFileNameText" text="{FileName}" maxLines="2"/>
+                                    <Text id="idDestinationText" text="{Destination}"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Descripción -->
                             <table:Column id="idObjectDescColumn" width="18rem">
                                 <Label id="idObjectDescLabel" text="{i18n>objectDescription}"/>
                                 <table:template>
                                     <Text id="idObjectDescText" text="{ObjectDescription}" maxLines="2"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Tipo de Documento -->
+                            <table:Column id="idTypeDocColumn" width="10rem">
+                                <Label text="Tipo de Documento"/>
+                                <table:template>
+                                    <Text text="{TypeDoc}"/>
+                                </table:template>
+                            </table:Column>
+                            <!-- Key (ObjKey) -->
+                            <table:Column id="idObjKeyColumn" width="14rem">
+                                <Label text="Clave Objeto"/>
+                                <table:template>
+                                    <Text text="{ObjKey}"/>
+                                </table:template>
+                            </table:Column>
+                            <!-- Usuario -->
                             <table:Column id="idUsernameColumn" width="10rem">
                                 <Label id="idUsernameLabel" text="{i18n>username}"/>
                                 <table:template>
                                     <Text id="idUsernameText" text="{Username}"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Modificado -->
                             <table:Column id="idModifiedAtColumn" width="14rem" sortProperty="ModifiedAt">
                                 <table:label>
                                     <HBox id="idModifiedAtHeaderHBox">
@@ -74,12 +93,14 @@
                                     <Text id="idModifiedAtText" text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Error -->
                             <table:Column id="idErrorColumn" width="10rem">
                                 <Label id="idErrorLabel" text="{i18n>error}"/>
                                 <table:template>
                                     <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatErrorText'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Acciones -->
                             <table:Column id="idActionsColumn" width="8rem">
                                 <Label id="idActionsLabel" text="{i18n>actions}"/>
                                 <table:template>

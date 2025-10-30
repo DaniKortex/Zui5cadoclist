@@ -16,7 +16,7 @@
                 <Property Name="Name" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Nombre"/>
                 <Property Name="Counter" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
                 <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Car.20"/>
-                <Property Name="Object_Type" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
+                <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
                 <NavigationProperty Name="ToImagesNav" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" FromRole="FromRole_ScanDocsListToItem" ToRole="ToRole_ScanDocsListToItem"/>
                 <NavigationProperty Name="NavDestination" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" FromRole="ToRole_AssocScanDocsListDestination" ToRole="FromRole_AssocScanDocsListDestination"/>
             </EntityType>
@@ -45,9 +45,9 @@
             </EntityType>
             <EntityType Name="ObjectType" sap:content-version="1">
                 <Key>
-                    <PropertyRef Name="Object_Type"/>
+                    <PropertyRef Name="TypeObj"/>
                 </Key>
-                <Property Name="Object_Type" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:filterable="false"/>
+                <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:filterable="false"/>
                 <Property Name="Description" Type="Edm.String" sap:unicode="false" sap:creatable="false" sap:updatable="false"/>
             </EntityType>
             <EntityType Name="ScanDocsItem" sap:content-version="1">
@@ -58,7 +58,7 @@
                 <Property Name="Name" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Nombre"/>
                 <Property Name="Counterimg" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
                 <Property Name="Input" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Input"/>
-                <Property Name="Doctype" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
+                <Property Name="TypeDoc" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
                 <Property Name="Length" Type="Edm.String" sap:unicode="false" sap:label="Longitud campo"/>
                 <Property Name="Imagen" Type="Edm.String" sap:unicode="false" sap:label="Imagen CC"/>
                 <Property Name="Mimetype" Type="Edm.String" sap:unicode="false" sap:label="Mimetype"/>
@@ -67,19 +67,20 @@
                 <Key>
                     <PropertyRef Name="DocId"/>
                 </Key>
-                <Property Name="DocId" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="ID del documento" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="ObjectDescription" Type="Edm.String" Nullable="false" MaxLength="100" sap:unicode="false" sap:label="Descripción TipoObj" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="TypeDoc" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="ObjKey" Type="Edm.String" Nullable="false" MaxLength="70" sap:unicode="false" sap:label="Clave del Documento" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="FileName" Type="Edm.String" Nullable="false" MaxLength="80" sap:unicode="false" sap:label="Archivo" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="Username" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Usuario" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="ModifiedAt" Type="Edm.DateTime" Nullable="false" Precision="0" sap:unicode="false" sap:label="Fecha" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="Error" Type="Edm.Boolean" sap:unicode="false" sap:label="Error" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="ErrorMessage" Type="Edm.String" sap:unicode="false" sap:label="ErrorMessage" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="MimeType" Type="Edm.String" Nullable="false" MaxLength="50" sap:unicode="false" sap:label="MimeType" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
-                <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
-                <Property Name="Pdf" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Pdf" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="DocId" Type="Edm.String" Nullable="false" MaxLength="8" sap:unicode="false" sap:label="ID del documento" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="Destination" Type="Edm.String" MaxLength="20" sap:unicode="false" sap:label="Destino" sap:creatable="false"/>
+                <Property Name="TypeObj" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false"/>
+                <Property Name="ObjectDescription" Type="Edm.String" MaxLength="100" sap:unicode="false" sap:creatable="false"/>
+                <Property Name="TypeDoc" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false"/>
+                <Property Name="ObjKey" Type="Edm.String" MaxLength="70" sap:unicode="false" sap:label="Clave del Documento" sap:creatable="false"/>
+                <Property Name="FileName" Type="Edm.String" MaxLength="80" sap:unicode="false" sap:label="Archivo" sap:creatable="false"/>
+                <Property Name="Username" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="Usuario" sap:creatable="false"/>
+                <Property Name="ModifiedAt" Type="Edm.DateTime" Precision="0" sap:unicode="false" sap:label="Fecha" sap:creatable="false"/>
+                <Property Name="Error" Type="Edm.Boolean" sap:unicode="false" sap:label="Error" sap:creatable="false"/>
+                <Property Name="ErrorMessage" Type="Edm.String" sap:unicode="false" sap:label="ErrorMessage" sap:creatable="false"/>
+                <Property Name="MimeType" Type="Edm.String" MaxLength="50" sap:unicode="false" sap:label="MimeType" sap:creatable="false"/>
+                <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false"/>
+                <Property Name="Pdf" Type="Edm.String" sap:unicode="false" sap:label="Pdf" sap:creatable="false"/>
             </EntityType>
             <Association Name="AssocDestinationRequiredFields" sap:content-version="1">
                 <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" Multiplicity="0..1" Role="FromRole_AssocDestinationRequiredFields"/>
