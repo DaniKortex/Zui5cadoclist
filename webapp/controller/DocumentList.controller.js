@@ -1,3 +1,4 @@
+
 sap.ui.define([
     "zui5cadoclist/controller/BaseController",
     "sap/ui/model/json/JSONModel",
@@ -145,6 +146,114 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
                 });
             } else {
                 this._openEditDialog(oData);
+            }
+        },
+
+        /**
+         * Handler para click en Clave Objeto: abre diálogo dinámico según requiredFields
+         */
+        onObjKeyLinkPress: function(oEvent) {
+            var oSource = oEvent.getSource();
+            var oCtx = oSource.getBindingContext();
+            var oData = oCtx.getObject();
+            var that = this;
+            // Solo abrir si Error está activo según formatter (usa _isTrueLike)
+            if (!this._isTrueLike(oData.Error)) {
+                this.showMessage("Solo se puede editar si la línea contiene error.");
+                return;
+            }
+            var sDestination = oData.Destination;
+            var oModel = this.getModel();
+            // Llamada OData para obtener los campos requeridos según el destino
+            oModel.read("/RequiredFieldsSet", {
+                filters: [new sap.ui.model.Filter("Destination", sap.ui.model.FilterOperator.EQ, sDestination)],
+                success: function(oResult) {
+                    var aFields = [];
+                    if (oResult && oResult.results) {
+                        // Cada resultado puede tener FieldName y Description
+                        aFields = oResult.results.map(function(o){
+                            return {
+                                field: o.FieldName,
+                                description: o.Description || ""
+                            };
+                        });
+                    }
+                    that._openDynamicEditDialog(oData, aFields);
+                },
+                error: function() {
+                    that.showErrorMessage("No se pudieron obtener los campos requeridos para el destino seleccionado");
+                }
+            });
+        },
+
+        /**
+         * Abre el diálogo dinámico con inputs según requiredFields
+         */
+        _openDynamicEditDialog: function(oData, aFields) {
+            var that = this;
+            if (!this._dynamicEditDialog) {
+                Fragment.load({
+                    name: "zui5cadoclist.view.DynamicEditDialog",
+                    controller: this
+                }).then(function(oDialog) {
+                    that._dynamicEditDialog = oDialog;
+                    that.getView().addDependent(oDialog);
+                    that._showDynamicEditDialog(oDialog, oData, aFields);
+                });
+            } else {
+                this._showDynamicEditDialog(this._dynamicEditDialog, oData, aFields);
+            }
+        },
+
+        /**
+         * Muestra el diálogo y genera los inputs dinámicamente
+         */
+        _showDynamicEditDialog: function(oDialog, oData, aFields) {
+            // Solo visualización: recorrer aFields (et_entityset) y mostrar DESCRIPTION + input vacío
+            var oVBox = oDialog.getContent()[0];
+            oVBox.removeAllItems();
+            aFields.forEach(function(oField, idx) {
+                var sLabel = (oField.description && oField.description.trim() !== "") ? oField.description : (oField.field || ("Campo " + (idx+1)));
+                var sInputId = "idInput_" + idx;
+                oVBox.addItem(new sap.m.Label({ text: sLabel, labelFor: sInputId }));
+                oVBox.addItem(new sap.m.Input({ id: sInputId, value: "" }));
+            });
+            oDialog.open();
+        },
+
+        /**
+         * Guardar cambios del diálogo dinámico
+         */
+        onDynamicEditDialogSave: function() {
+            var oDialog = this._dynamicEditDialog;
+            var oEditModel = oDialog.getModel("editDynamic");
+            var oData = oEditModel.getData();
+            var oModel = this.getModel();
+            var that = this;
+            var sPath = oModel.createKey("/PdfListSet", { DocId: oData.DocId });
+            oModel.update(sPath, oData, {
+                success: function() {
+                    that.showSuccessMessage("Datos actualizados correctamente");
+                    oDialog.close();
+                    var oTable = that.byId("idDocumentsTable");
+                    if (oTable && oTable.getBinding("rows")) {
+                        oTable.getBinding("rows").refresh();
+                    }
+                },
+                error: function(oError) {
+                    that.showErrorMessage("Error al actualizar los datos");
+                }
+            });
+        },
+
+        /**
+         * Cancelar diálogo dinámico
+         */
+        onDynamicEditDialogCancel: function() {
+            if (this._dynamicEditDialog) {
+                this._dynamicEditDialog.close();
+                this._dynamicEditDialog.destroy();
+                this._dynamicEditDialog = null;
             }
         },
 

@@ -2,19 +2,27 @@
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m"
     xmlns:table="sap.ui.table"
-    xmlns:smartFilterBar="sap.ui.comp.smartfilterbar">
-    <Page id="idDocumentListPage" title="{i18n>title}" showNavButton="false">
-        <content>
-            <Panel id="idDocumentsPanel" headerText="{i18n>documentsListTitle}" class="sapUiResponsiveMargin">
-                <content>
-                    <Toolbar id="idHeaderToolbar">
-                        <Title id="idDocumentsTitle" text="{i18n>documentsCount}" level="H2"/>
+    xmlns:smartFilterBar="sap.ui.comp.smartfilterbar"
+    xmlns:f="sap.f">
+    <f:DynamicPage id="idDocumentListDynamicPage" showFooter="true">
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title id="idDocumentosDigitalizadosTitle" text="Documentos digitalizados" level="H2"/>
+                </f:heading>
+                <f:actions>
+                    <Toolbar id="idHeaderToolbar" design="Transparent">
                         <ToolbarSpacer id="idSpacerToolbar1"/>
                         <Button id="idRefreshButton" icon="sap-icon://refresh" 
                                tooltip="{i18n>refresh}" 
                                press=".onRefresh"/>
                     </Toolbar>
-
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+        <f:content>
+            <Panel id="idDocumentsPanel" class="sapUiResponsiveMargin">
+                <content>
                     <!-- Smart Filter Bar (basic) -->
                     <smartFilterBar:SmartFilterBar id="idSmartFilterBar"
                                                   entitySet="PdfListSet"
@@ -25,14 +33,13 @@
                             <smartFilterBar:ControlConfiguration id="idTypeDocControlConfiguration" key="TypeDoc" visible="true" visibleInAdvancedArea="false"/>
                         </smartFilterBar:controlConfiguration>
                     </smartFilterBar:SmartFilterBar>
-                    
                     <!-- Documents sap.ui.table.Table -->
                     <table:Table id="idDocumentsTable"
                                  rows="{ path: '/PdfListSet', parameters: { operationMode: 'Server' } }"
                                  busyIndicatorDelay="{viewModel>/delay}"
                                  busy="{viewModel>/busy}"
                                  selectionMode="Single"
-                                  selectionBehavior="Row"
+                                 selectionBehavior="Row"
                                  rowSelectionChange=".onRowSelectionChange">
                         <table:columns>
                             <!-- ID -->
@@ -47,6 +54,13 @@
                                     <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}"/>
                                 </table:template>
                             </table:Column>
+                            <!-- Nombre de fichero -->
+                            <table:Column id="idFileNameColumn" width="16rem">
+                                <Label id="idFileNameLabel" text="Nombre de fichero"/>
+                                <table:template>
+                                    <Text id="idFileNameText" text="{FileName}"/>
+                                </table:template>
+                            </table:Column>
                             <!-- Destino -->
                             <table:Column id="idDestinationColumn" width="10rem">
                                 <Label id="idDestinationLabel" text="Destino"/>
@@ -56,23 +70,17 @@
                             </table:Column>
                             <!-- Descripción -->
                             <table:Column id="idObjectDescColumn" width="18rem">
-                                <Label id="idObjectDescLabel" text="{i18n>objectDescription}"/>
+                                    <Label id="idObjectDescLabel" text="Tipo de Objeto"/>
                                 <table:template>
                                     <Text id="idObjectDescText" text="{ObjectDescription}" maxLines="2"/>
                                 </table:template>
                             </table:Column>
                             <!-- Tipo de Documento -->
-                            <table:Column id="idTypeDocColumn" width="10rem">
-                                <Label text="Tipo de Documento"/>
-                                <table:template>
-                                    <Text text="{TypeDoc}"/>
-                                </table:template>
-                            </table:Column>
                             <!-- Key (ObjKey) -->
                             <table:Column id="idObjKeyColumn" width="14rem">
                                 <Label text="Clave Objeto"/>
                                 <table:template>
-                                    <Text text="{ObjKey}"/>
+                                    <Link id="idObjKeyLink" text="{ObjKey}" press=".onObjKeyLinkPress"/>
                                 </table:template>
                             </table:Column>
                             <!-- Usuario -->
@@ -119,8 +127,8 @@
                     </table:Table>
                 </content>
             </Panel>
-        </content>
-        <footer>
+        </f:content>
+        <f:footer>
             <Toolbar id="idFooterToolbar">
                 <ToolbarSpacer id="idFooterSpacer"/>
                 <Button id="idVisualizeButton"
@@ -130,6 +138,6 @@
                        enabled="{viewModel>/hasSelection}"
                        type="Emphasized"/>
             </Toolbar>
-        </footer>
-    </Page>
+        </f:footer>
+    </f:DynamicPage>
 </mvc:View>
