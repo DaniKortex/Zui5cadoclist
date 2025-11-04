@@ -5,9 +5,11 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/ui/model/Sorter",
-    "sap/ui/core/Fragment"
+    "sap/ui/core/Fragment",
+    "sap/m/SelectDialog",
+    "sap/m/StandardListItem"
 ],
-function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
+function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, SelectDialog, StandardListItem) {
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.DocumentList", {
@@ -177,6 +179,8 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
         onDestinationPress: function(oEvent) {
             var oCtx = oEvent.getSource().getBindingContext();
             var oRowData = oCtx ? oCtx.getObject() : {};
+            // Guardar la fila actual para usarla en el confirm del diálogo
+            this._destinationRow = oRowData;
             // Permitir edición si hay Error o si el Status es 'Pendiente' (ObjKey vacío)
             var bIsError = this._isTrueLike(oRowData.Error);
             var bIsPending = !oRowData.ObjKey || (typeof oRowData.ObjKey === "string" && oRowData.ObjKey.trim() === "");
@@ -214,15 +218,102 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
         },
 
         onDestinationDialogConfirm: function() {
-            if (this._destinationDialog) {
-                this._destinationDialog.close();
+            var that = this;
+            if (!this._destinationDialog) {
+                return;
             }
+            var oDestModel = this._destinationDialog.getModel("destination");
+            var sNewDest = oDestModel ? oDestModel.getProperty("/newDestination") : "";
+            // cerrar diálogo
+            this._destinationDialog.close();
+
+            // Recuperar la fila original que abrió el diálogo
+            var oRowData = this._destinationRow || {};
+            // Actualizar destino en la fila temporal antes de abrir el DynamicEditDialog
+            oRowData.Destination = sNewDest;
+
+            // Llamada OData para obtener los campos requeridos según el destino seleccionado
+            var oModel = this.getModel();
+            oModel.read("/RequiredFieldsSet", {
+                filters: [new sap.ui.model.Filter("Destination", sap.ui.model.FilterOperator.EQ, sNewDest)],
+                success: function(oResult) {
+                    var aFields = [];
+                    if (oResult && oResult.results) {
+                        aFields = oResult.results.map(function(o){
+                            return {
+                                field: o.FieldName,
+                                description: o.Description || ""
+                            };
+                        });
+                    }
+                    that._openDynamicEditDialog(oRowData, aFields);
+                    // limpiar referencia temporal
+                    that._destinationRow = null;
+                },
+                error: function() {
+                    that.showErrorMessage("No se pudieron obtener los campos requeridos para el destino seleccionado");
+                }
+            });
         },
 
         onDestinationDialogCancel: function() {
             if (this._destinationDialog) {
                 this._destinationDialog.close();
             }
+        },
+
+        /**
+         * Value help for destination input: open a SelectDialog with values from DestinationAssign
+         */
+        onDestinationValueHelp: function(oEvent) {
+            var that = this;
+            // Create or open the SelectDialog
+            if (!this._destinationValueHelp) {
+                this._destinationValueHelp = new SelectDialog({
+                    title: "Seleccionar destino",
+                    noDataText: "No hay destinos disponibles",
+                    items: {
+                        path: "/items",
+                        template: new StandardListItem({
+                            title: "{text}",
+                            description: "{key}"
+                        })
+                    },
+                    confirm: function(oEvt) {
+                        var oSel = oEvt.getParameter("selectedItem");
+                        if (oSel) {
+                            var oCtx = oSel.getBindingContext();
+                            var sKey = oCtx.getProperty("key");
+                            // set value to destination model
+                            var oDestModel = that._destinationDialog && that._destinationDialog.getModel("destination");
+                            if (oDestModel) {
+                                oDestModel.setProperty("/newDestination", sKey);
+                            }
+                        }
+                        this.close();
+                    }
+                });
+            }
+
+            // Read data from OData entity set DestinationAssign
+            var oModel = this.getModel();
+            oModel.read("/DestinationAssignSet", {
+                success: function(oData) {
+                    var a = oData && oData.results ? oData.results : [];
+                    var aItems = a.map(function(o){
+                        return {
+                            key: o.Destination || o.Key || o.Id || o.Name || "",
+                            text: o.Description || o.Destination || o.Name || o.Key || ""
+                        };
+                    });
+                    var oListModel = new JSONModel({ items: aItems });
+                    that._destinationValueHelp.setModel(oListModel);
+                    that._destinationValueHelp.open();
+                },
+                error: function() {
+                    that.showErrorMessage("No se pudieron obtener los destinos");
+                }
+            });
         },
 
         /**
@@ -287,15 +378,44 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
          * Muestra el diálogo y genera los inputs dinámicamente
          */
         _showDynamicEditDialog: function(oDialog, oData, aFields) {
-            // Solo visualización: recorrer aFields (et_entityset) y mostrar DESCRIPTION + input vacío
+            // Preparamos un JSONModel para mantener los valores introducidos por el usuario
+            // y una pequeña tabla de mapeo para poder 'aplanar' los valores al guardar.
             var oVBox = oDialog.getContent()[0];
             oVBox.removeAllItems();
+
+            // Construir estructura del modelo: copiar oData y preparar espacio para los campos requeridos
+            var oModelData = Object.assign({}, oData);
+            oModelData.requiredFields = {};
+            oModelData._fieldMap = []; // [{ key: 'f0', original: 'FIELDNAME' }, ...]
+
+            // Helper para generar claves seguras para propiedades del modelo
+            var fnSafeKey = function(s) {
+                if (!s || typeof s !== 'string') { return null; }
+                // Reemplazar caracteres no alfanuméricos por underscore
+                return s.replace(/[^a-zA-Z0-9]/g, '_');
+            };
+
             aFields.forEach(function(oField, idx) {
                 var sLabel = (oField.description && oField.description.trim() !== "") ? oField.description : (oField.field || ("Campo " + (idx+1)));
-                var sInputId = "idInput_" + idx;
+                // Use field name as property when posible, else fallback to f{idx}
+                var sOrig = oField.field || ("f" + idx);
+                var sKey = fnSafeKey(sOrig) || ("f" + idx);
+                // Garantizar unicidad
+                if (oModelData._fieldMap.some(function(m){ return m.key === sKey; })) {
+                    sKey = sKey + "_" + idx;
+                }
+                oModelData._fieldMap.push({ key: sKey, original: sOrig });
+                // Inicializar valor (si ya existe en oData, usarlo)
+                oModelData.requiredFields[sKey] = oData && oData[sOrig] ? oData[sOrig] : "";
+
+                var sInputId = oDialog.getId() + "--input_" + sKey;
                 oVBox.addItem(new sap.m.Label({ text: sLabel, labelFor: sInputId }));
-                oVBox.addItem(new sap.m.Input({ id: sInputId, value: "" }));
+                oVBox.addItem(new sap.m.Input({ id: sInputId, value: '{editDynamic>/requiredFields/' + sKey + '}' }));
             });
+
+            // Set model on dialog so onDynamicEditDialogSave pueda leerlo
+            var oEditModel = new JSONModel(oModelData);
+            oDialog.setModel(oEditModel, "editDynamic");
             oDialog.open();
         },
 
@@ -304,24 +424,37 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
          */
         onDynamicEditDialogSave: function() {
             var oDialog = this._dynamicEditDialog;
+            if (!oDialog) { return; }
             var oEditModel = oDialog.getModel("editDynamic");
-            var oData = oEditModel.getData();
-            var oModel = this.getModel();
-            var that = this;
-            var sPath = oModel.createKey("/PdfListSet", { DocId: oData.DocId });
-            oModel.update(sPath, oData, {
-                success: function() {
-                    that.showSuccessMessage("Datos actualizados correctamente");
-                    oDialog.close();
-                    var oTable = that.byId("idDocumentsTable");
-                    if (oTable && oTable.getBinding("rows")) {
-                        oTable.getBinding("rows").refresh();
-                    }
-                },
-                error: function(oError) {
-                    that.showErrorMessage("Error al actualizar los datos");
-                }
-            });
+            if (!oEditModel) {
+                this.showErrorMessage("No hay datos para guardar");
+                return;
+            }
+            var oDataModel = oEditModel.getData();
+            // Emular una edición normal: partir de los datos originales y sobrescribir
+            // los campos requeridos con los valores introducidos por el usuario.
+            var oPayload = Object.assign({}, oDataModel);
+
+            // Concatenar todos los inputs en ObjKey si hay más de uno
+            var sConcatenated = "";
+            if (oDataModel._fieldMap && Array.isArray(oDataModel._fieldMap)) {
+                oDataModel._fieldMap.forEach(function(m) {
+                    var v = (oDataModel.requiredFields && (m.key in oDataModel.requiredFields)) ? oDataModel.requiredFields[m.key] : "";
+                    sConcatenated += (v != null) ? String(v) : "";
+                });
+            }
+
+            // Construir payload equivalente al del diálogo de edición: enviar DocId,
+            // Destination y ObjKey (concatenado). No enviar propiedades con nombres
+            // desconocidos como 'f0' que el backend rechazará.
+            var oFinalPayload = {
+                DocId: oDataModel.DocId
+            };
+            if (oDataModel.Destination) { oFinalPayload.Destination = oDataModel.Destination; }
+            if (sConcatenated !== "") { oFinalPayload.ObjKey = sConcatenated; }
+
+            // Llamar a la misma rutina centralizada de update
+            this._saveEntry(oFinalPayload, oDialog);
         },
 
         /**
@@ -352,17 +485,28 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
             var oDialog = this._editDialog;
             var oEditModel = oDialog.getModel("edit");
             var oData = oEditModel.getData();
+            // Reuse central update logic
+            this._saveEntry(oData, oDialog);
+        },
+
+        /**
+         * Centraliza la lógica de update en el backend para una entrada PdfListSet
+         * @param {object} oData datos a enviar (debe contener DocId)
+         * @param {sap.m.Dialog} oDialog diálogo que se cerrará en éxito
+         */
+        _saveEntry: function(oData, oDialog) {
             var oModel = this.getModel();
             var that = this;
-
-            // Construir la key para el update
-            var sPath = oModel.createKey("/PdfListSet", { DocId: oData.DocId });
-
+            try {
+                var sPath = oModel.createKey("/PdfListSet", { DocId: oData.DocId });
+            } catch (e) {
+                this.showErrorMessage("DocId inválido para actualización");
+                return;
+            }
             oModel.update(sPath, oData, {
                 success: function() {
                     that.showSuccessMessage("Datos actualizados correctamente");
-                    oDialog.close();
-                    // Refrescar tabla
+                    if (oDialog) { oDialog.close(); }
                     var oTable = that.byId("idDocumentsTable");
                     if (oTable && oTable.getBinding("rows")) {
                         oTable.getBinding("rows").refresh();
