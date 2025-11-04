@@ -44,7 +44,7 @@
                                  rowSelectionChange=".onRowSelectionChange">
                         <table:columns>
                             <!-- ID -->
-                            <table:Column id="idDocIdColumn" width="12rem" sortProperty="DocId">
+                            <table:Column id="idDocIdColumn" width="7rem" sortProperty="DocId">
                                 <Label id="idDocIdColLabel" text="{i18n>docId}"/>
                                 <table:label>
                                     <HBox id="idDocIdHeaderHBox">
@@ -66,11 +66,11 @@
                             <table:Column id="idDestinationColumn" width="10rem">
                                 <Label id="idDestinationLabel" text="Destino"/>
                                 <table:template>
-                                    <Text id="idDestinationText" text="{Destination}"/>
+                                    <Link id="idDestinationLink" text="{ path: 'Destination', formatter: '.formatDestinationText' }" press=".onDestinationPress"/>
                                 </table:template>
                             </table:Column>
                             <!-- Descripción -->
-                            <table:Column id="idObjectDescColumn" width="18rem">
+                            <table:Column id="idObjectDescColumn" width="9rem">
                                     <Label id="idObjectDescLabel" text="Tipo de Objeto"/>
                                 <table:template>
                                     <Text id="idObjectDescText" text="{ObjectDescription}" maxLines="2"/>
@@ -92,7 +92,7 @@
                                 </table:template>
                             </table:Column>
                             <!-- Modificado -->
-                            <table:Column id="idModifiedAtColumn" width="14rem" sortProperty="ModifiedAt">
+                            <table:Column id="idModifiedAtColumn" width="9rem" sortProperty="ModifiedAt">
                                 <table:label>
                                     <HBox id="idModifiedAtHeaderHBox">
                                         <Text id="idModifiedAtHeaderText" text="{i18n>modifiedAt}"/>
@@ -103,14 +103,14 @@
                                 </table:template>
                             </table:Column>
                             <!-- Error -->
-                            <table:Column id="idErrorColumn" width="10rem">
+                            <table:Column id="idErrorColumn" width="5rem">
                                 <Label id="idErrorLabel" text="{i18n>error}"/>
                                 <table:template>
                                     <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatErrorText'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
                                 </table:template>
                             </table:Column>
                             <!-- Acciones -->
-                            <table:Column id="idActionsColumn" width="8rem">
+                            <table:Column id="idActionsColumn" width="6rem">
                                 <Label id="idActionsLabel" text="{i18n>actions}"/>
                                 <table:template>
                                     <HBox>
@@ -125,7 +125,7 @@
                                 </table:template>
                             </table:Column>
                             <!-- Status -->
-                            <table:Column id="idStatusColumn" width="10rem">
+                            <table:Column id="idStatusColumn" width="6rem">
                                 <Label id="idStatusLabel" text="Status"/>
                                 <table:template>
                                     <Text id="idStatusText" text="{path: 'ObjKey', formatter: '.formatStatusText'}"/>

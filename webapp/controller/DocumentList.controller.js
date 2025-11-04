@@ -21,6 +21,16 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
             }
             return '';
         },
+
+        /**
+         * Formatter para mostrar el texto de Destino. Si está vacío, mostrar 'Indicar destino'
+         */
+        formatDestinationText: function(v) {
+            if (v && typeof v === 'string' && v.trim() !== '') {
+                return v;
+            }
+            return 'Indicar destino';
+        },
         
         onInit: function () {
             console.log("DocumentList Controller - onInit called");
@@ -158,6 +168,60 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
                 });
             } else {
                 this._openEditDialog(oData);
+            }
+        },
+
+        /**
+         * Abrir diálogo para indicar nuevo destino al pulsar en el link de Destino
+         */
+        onDestinationPress: function(oEvent) {
+            var oCtx = oEvent.getSource().getBindingContext();
+            var oRowData = oCtx ? oCtx.getObject() : {};
+            // Permitir edición si hay Error o si el Status es 'Pendiente' (ObjKey vacío)
+            var bIsError = this._isTrueLike(oRowData.Error);
+            var bIsPending = !oRowData.ObjKey || (typeof oRowData.ObjKey === "string" && oRowData.ObjKey.trim() === "");
+            if (!(bIsError || bIsPending)) {
+                this.showMessage("Solo se puede editar si la línea contiene Error o está Pendiente.");
+                return;
+            }
+            var sCurrentDest = oRowData && oRowData.Destination ? oRowData.Destination : "";
+            this._openDestinationDialog(sCurrentDest);
+        },
+
+        _openDestinationDialog: function(sCurrentDest) {
+            var that = this;
+            if (!this._destinationDialog) {
+                Fragment.load({
+                    name: "zui5cadoclist.view.DestinationDialog",
+                    controller: this
+                }).then(function(oDialog){
+                    that._destinationDialog = oDialog;
+                    that.getView().addDependent(oDialog);
+                    var oModel = new JSONModel({ newDestination: sCurrentDest });
+                    oDialog.setModel(oModel, "destination");
+                    oDialog.open();
+                });
+            } else {
+                var oModel = this._destinationDialog.getModel("destination");
+                if (!oModel) {
+                    oModel = new JSONModel({ newDestination: sCurrentDest });
+                    this._destinationDialog.setModel(oModel, "destination");
+                } else {
+                    oModel.setProperty("/newDestination", sCurrentDest);
+                }
+                this._destinationDialog.open();
+            }
+        },
+
+        onDestinationDialogConfirm: function() {
+            if (this._destinationDialog) {
+                this._destinationDialog.close();
+            }
+        },
+
+        onDestinationDialogCancel: function() {
+            if (this._destinationDialog) {
+                this._destinationDialog.close();
             }
         },
 
