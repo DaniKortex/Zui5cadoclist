@@ -11,6 +11,16 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.DocumentList", {
+       
+        /**
+         * Formatter para mostrar el status: 'Pendiente' si ObjKey vacío, si no mostrar vacío
+         */
+        formatStatusText: function(v) {
+            if (!v || (typeof v === 'string' && v.trim() === '')) {
+                return 'Pendiente';
+            }
+            return '';
+        },
         
         onInit: function () {
             console.log("DocumentList Controller - onInit called");
@@ -119,10 +129,12 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
         // onItemPress removed: sap.ui.table.Table uses row selection instead
 
         /**
-         * Formatter para mostrar el icono de edición solo si hay error
+         * Formatter para mostrar el icono de edición si hay Error o si está Pendiente (ObjKey vacío)
          */
-        formatEditVisible: function (v) {
-            return this._isTrueLike(v);
+        formatEditVisible: function (vError, vObjKey) {
+            var bError = this._isTrueLike(vError);
+            var bPending = !vObjKey || (typeof vObjKey === "string" && vObjKey.trim() === "");
+            return bError || bPending;
         },
 
         /**
@@ -157,9 +169,11 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment) {
             var oCtx = oSource.getBindingContext();
             var oData = oCtx.getObject();
             var that = this;
-            // Solo abrir si Error está activo según formatter (usa _isTrueLike)
-            if (!this._isTrueLike(oData.Error)) {
-                this.showMessage("Solo se puede editar si la línea contiene error.");
+            // Permitir edición si hay Error o si el Status es 'Pendiente' (ObjKey vacío)
+            var bIsError = this._isTrueLike(oData.Error);
+            var bIsPending = !oData.ObjKey || (typeof oData.ObjKey === "string" && oData.ObjKey.trim() === "");
+            if (!(bIsError || bIsPending)) {
+                this.showMessage("Solo se puede editar si la línea contiene Error o está Pendiente.");
                 return;
             }
             var sDestination = oData.Destination;

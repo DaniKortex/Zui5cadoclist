@@ -10,8 +10,8 @@
         <content>
             <VBox id="idPdfViewerVBox" class="sapUiMediumMargin">
                 <HBox id="idPdfInfoHBox" class="sapUiSmallMarginBottom">
-                    <Label id="idDocIdLabel" text="{i18n>docId}: {pdf>/docId}" class="sapUiSmallMarginEnd"/>
-                    <Label id="idFileNameLabel" text="{i18n>fileName}: {pdf>/title}"/>
+                    <Label text="{i18n>docId}: {pdf>/docId}" class="sapUiSmallMarginEnd"/>
+                    <Label text="{i18n>fileName}: {pdf>/title}"/>
                 </HBox>
                 
                 <!-- PDF Viewer using Carousel with embedded PDF -->
