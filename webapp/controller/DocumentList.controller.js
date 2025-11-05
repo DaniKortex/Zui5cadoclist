@@ -381,7 +381,12 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
             // Preparamos un JSONModel para mantener los valores introducidos por el usuario
             // y una pequeña tabla de mapeo para poder 'aplanar' los valores al guardar.
             var oVBox = oDialog.getContent()[0];
-            oVBox.removeAllItems();
+            // Destroy existing items to avoid duplicate control IDs when reopening
+            if (oVBox.destroyItems) {
+                oVBox.destroyItems();
+            } else {
+                oVBox.removeAllItems();
+            }
 
             // Construir estructura del modelo: copiar oData y preparar espacio para los campos requeridos
             var oModelData = Object.assign({}, oData);
@@ -408,7 +413,8 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
                 // Inicializar valor (si ya existe en oData, usarlo)
                 oModelData.requiredFields[sKey] = oData && oData[sOrig] ? oData[sOrig] : "";
 
-                var sInputId = oDialog.getId() + "--input_" + sKey;
+                // Use fragment-scoped id to avoid global collisions and ensure labelFor matches
+                var sInputId = (oDialog.createId) ? oDialog.createId("input_" + sKey) : (oDialog.getId() + "--input_" + sKey);
                 oVBox.addItem(new sap.m.Label({ text: sLabel, labelFor: sInputId }));
                 oVBox.addItem(new sap.m.Input({ id: sInputId, value: '{editDynamic>/requiredFields/' + sKey + '}' }));
             });
@@ -435,14 +441,15 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
             // los campos requeridos con los valores introducidos por el usuario.
             var oPayload = Object.assign({}, oDataModel);
 
-            // Concatenar todos los inputs en ObjKey si hay más de uno
-            var sConcatenated = "";
+            // Concatenar todos los inputs en ObjKey separados por ';' (preservando posiciones vacías)
+            var aConcats = [];
             if (oDataModel._fieldMap && Array.isArray(oDataModel._fieldMap)) {
                 oDataModel._fieldMap.forEach(function(m) {
                     var v = (oDataModel.requiredFields && (m.key in oDataModel.requiredFields)) ? oDataModel.requiredFields[m.key] : "";
-                    sConcatenated += (v != null) ? String(v) : "";
+                    aConcats.push(v != null ? String(v) : "");
                 });
             }
+            var sConcatenated = aConcats.join(";");
 
             // Construir payload equivalente al del diálogo de edición: enviar DocId,
             // Destination y ObjKey (concatenado). No enviar propiedades con nombres
