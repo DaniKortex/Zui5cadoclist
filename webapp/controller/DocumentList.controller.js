@@ -24,31 +24,16 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
          * La comprobación es case-insensitive y acepta cualquier representación que contenga las letras indicadas.
          */
         formatStatusText: function(vError) {
+            // The backend uses only three possible values for Error: 'E', 'P' or empty.
+            // Map them explicitly: 'P' -> 'Pendiente', 'E' -> 'Error', empty/null -> 'OK'.
             try {
-                // Null/empty -> OK
                 if (vError === null || vError === undefined) { return 'OK'; }
-
-                // If it's a boolean (e.g., mock data), true -> Error, false -> OK
-                if (typeof vError === 'boolean') {
-                    return vError ? 'Error' : 'OK';
-                }
-
-                // If it's a number (e.g., 1/0), treat 1 as Error
-                if (typeof vError === 'number') {
-                    return vError === 1 ? 'Error' : 'OK';
-                }
-
-                // Strings and other representations
                 var s = String(vError).trim();
                 if (s === '') { return 'OK'; }
                 var sUpper = s.toUpperCase();
-                // Priority: 'P' (Pendiente) first, then 'E' or ABAP 'X' or '1' -> Error
                 if (sUpper.indexOf('P') !== -1) { return 'Pendiente'; }
                 if (sUpper.indexOf('E') !== -1) { return 'Error'; }
-                if (sUpper.indexOf('X') !== -1) { return 'Error'; }
-                if (sUpper.indexOf('1') !== -1) { return 'Error'; }
-                // Fallback: use truthy normalization
-                return this._isTrueLike(vError) ? 'Error' : 'OK';
+                return 'OK';
             } catch (e) {
                 return 'OK';
             }
@@ -62,6 +47,14 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                 return v;
             }
             return 'Indicar destino';
+        },
+
+        /**
+         * Decide si el campo Destination debe ser editable según el valor de Error ('P'/'E').
+         * Devuelve boolean: true si se permite editar (Error = 'P' o 'E'), false en caso contrario.
+         */
+        formatDestinationEditable: function(vError) {
+            return this._errorAllowsEdit(vError);
         },
         
         onInit: function () {
@@ -173,10 +166,26 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
         /**
          * Formatter para mostrar el icono de edición si hay Error o si está Pendiente (ObjKey vacío)
          */
-        formatEditVisible: function (vError, vObjKey) {
-            var bError = this._isTrueLike(vError);
-            var bPending = !vObjKey || (typeof vObjKey === "string" && vObjKey.trim() === "");
-            return bError || bPending;
+        formatEditVisible: function (vError, vObjKey, vDestination) {
+            // Allow edit only when Error contains 'P' or 'E' AND a Destination is assigned
+            var bErrorAllowed = this._errorAllowsEdit(vError);
+            var bHasDestination = (typeof vDestination === 'string' && vDestination.trim() !== '');
+            return !!(bErrorAllowed && bHasDestination);
+        },
+
+        /**
+         * Check if the Error field explicitly allows editing: contains 'P' (Pendiente) or 'E' (Error)
+         * Accepts booleans/number/string representations; returns boolean.
+         */
+        _errorAllowsEdit: function(vError) {
+            // Only accept the exact expected set: 'P', 'E' or empty. Treat non-string as empty.
+            if (vError === null || vError === undefined) { return false; }
+            if (typeof vError !== 'string') { return false; }
+            var s = vError.trim().toUpperCase();
+            if (s === '') { return false; }
+            if (s.indexOf('P') !== -1) { return true; }
+            if (s.indexOf('E') !== -1) { return true; }
+            return false;
         },
 
         /**
@@ -211,11 +220,10 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
             var oRowData = oCtx ? oCtx.getObject() : {};
             // Guardar la fila actual para usarla en el confirm del diálogo
             this._destinationRow = oRowData;
-            // Permitir edición si hay Error o si el Status es 'Pendiente' (ObjKey vacío)
-            var bIsError = this._isTrueLike(oRowData.Error);
-            var bIsPending = !oRowData.ObjKey || (typeof oRowData.ObjKey === "string" && oRowData.ObjKey.trim() === "");
-            if (!(bIsError || bIsPending)) {
-                this.showMessage("Solo se puede editar si la línea contiene Error o está Pendiente.");
+            // Permitir edición sólo si el campo Error contiene 'P' o 'E'
+            var bAllowEdit = this._errorAllowsEdit(oRowData.Error);
+            if (!bAllowEdit) {
+                this.showMessage("Solo se puede editar si la línea contiene 'P' (Pendiente) o 'E' (Error) en la columna Error.");
                 return;
             }
             var sCurrentDest = oRowData && oRowData.Destination ? oRowData.Destination : "";
@@ -250,6 +258,15 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
         onDestinationValueHelp: function(oEvent) {
             var that = this;
             var oSource = oEvent.getSource();
+            // If the value-help was triggered from a table row, only allow it when Error contains 'P' or 'E'
+            var oRowCtx = oSource.getBindingContext();
+            if (oRowCtx) {
+                var oRowObj = oRowCtx.getObject();
+                if (!this._errorAllowsEdit(oRowObj && oRowObj.Error)) {
+                    this.showMessage("Solo se puede seleccionar destino si la línea contiene 'P' (Pendiente) o 'E' (Error) en la columna Error.");
+                    return;
+                }
+            }
             this._destinationValueHelpSource = oSource;
 
             if (!this._destinationPopover) {
@@ -318,11 +335,10 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
             var oCtx = oSource.getBindingContext();
             var oData = oCtx.getObject();
             var that = this;
-            // Permitir edición si hay Error o si el Status es 'Pendiente' (ObjKey vacío)
-            var bIsError = this._isTrueLike(oData.Error);
-            var bIsPending = !oData.ObjKey || (typeof oData.ObjKey === "string" && oData.ObjKey.trim() === "");
-            if (!(bIsError || bIsPending)) {
-                this.showMessage("Solo se puede editar si la línea contiene Error o está Pendiente.");
+            // Permitir edición sólo si el campo Error contiene 'P' o 'E'
+            var bAllowEdit = this._errorAllowsEdit(oData.Error);
+            if (!bAllowEdit) {
+                this.showMessage("Solo se puede editar si la línea contiene 'P' (Pendiente) o 'E' (Error) en la columna Error.");
                 return;
             }
             var sDestination = oData.Destination;
@@ -683,6 +699,32 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
         },
 
         /**
+         * Event handler for row-level visualize button.
+         * Opens the PDF dialog for the row that originated the press event (no selection required).
+         * @param {sap.ui.base.Event} oEvent
+         */
+        onRowVisualizePress: function (oEvent) {
+            var oSource = oEvent.getSource();
+            if (!oSource) { return; }
+            var oBindingContext = oSource.getBindingContext();
+            if (!oBindingContext) {
+                this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
+                return;
+            }
+            var oItem = oBindingContext.getObject();
+            if (!oItem) {
+                this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
+                return;
+            }
+            if (!oItem.Pdf) {
+                this.showErrorMessage(this.getResourceBundle().getText("noPdfAvailable"));
+                return;
+            }
+            // Reuse the existing PDF dialog opener
+            this._showPdfDialog(oItem);
+        },
+
+        /**
          * Show PDF in dialog
          * @private
          * @param {object} oSelectedItem selected document item
@@ -764,7 +806,13 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
          * @param {*} v value from OData (boolean true/false or 'X'/' ')
          */
         formatErrorState: function (v) {
-            return this._isTrueLike(v) ? "Error" : "Success";
+            // Map 'E' -> Error, 'P' -> Warning, empty -> Success
+            if (v === null || v === undefined) { return "Success"; }
+            if (typeof v !== 'string') { return "Success"; }
+            var s = v.trim().toUpperCase();
+            if (s.indexOf('E') !== -1) { return "Error"; }
+            if (s.indexOf('P') !== -1) { return "Warning"; }
+            return "Success";
         },
 
         /**
@@ -773,7 +821,12 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
          * @param {*} v value from OData
          */
         formatErrorText: function (v) {
-            return this._isTrueLike(v) ? this.getResourceBundle().getText("error") : "";
+            if (v === null || v === undefined) { return ""; }
+            if (typeof v !== 'string') { return ""; }
+            var s = v.trim().toUpperCase();
+            if (s.indexOf('E') !== -1) { return this.getResourceBundle().getText("error"); }
+            if (s.indexOf('P') !== -1) { return "Pendiente"; }
+            return "";
         },
 
         /**

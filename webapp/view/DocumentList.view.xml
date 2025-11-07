@@ -66,7 +66,7 @@
                             <table:Column id="idDestinationColumn" width="10rem">
                                 <Label id="idDestinationLabel" text="Destino"/>
                                 <table:template>
-                                    <Input id="idDestinationInput" value="{Destination}" showValueHelp="true" valueHelpRequest=".onDestinationValueHelp" editable="true" />
+                                    <Input id="idDestinationInput" value="{Destination}" showValueHelp="true" valueHelpRequest=".onDestinationValueHelp" editable="{ path: 'Error', formatter: '.formatDestinationEditable' }" />
                                 </table:template>
                             </table:Column>
                             <!-- Descripción -->
@@ -81,7 +81,17 @@
                             <table:Column id="idObjKeyColumn" width="14rem">
                                 <Label text="Clave Objeto"/>
                                 <table:template>
-                                    <Link id="idObjKeyLink" text="{ObjKey}" press=".onObjKeyLinkPress"/>
+                                    <HBox>
+                                        <!-- ObjKey as plain text (not clickable) -->
+                                        <Text id="idObjKeyText" text="{ObjKey}" />
+                                        <!-- Edit button opens the same dialog as before; visible only when allowed -->
+                    <Button id="idObjKeyEditButton"
+                        icon="sap-icon://edit"
+                        type="Transparent"
+                        tooltip="Editar"
+                        visible="{ parts: [{path: 'Error'}, {path: 'ObjKey'}, {path: 'Destination'}], formatter: '.formatEditVisible' }"
+                        press=".onObjKeyLinkPress"/>
+                                    </HBox>
                                 </table:template>
                             </table:Column>
                             <!-- Usuario -->
@@ -114,12 +124,12 @@
                                 <Label id="idActionsLabel" text="{i18n>actions}"/>
                                 <table:template>
                                     <HBox>
-                                        <Button id="idEditButton"
-                                            icon="sap-icon://edit"
-                                            type="Transparent"
-                                            tooltip="Editar"
-                                            visible="{ parts: [{path: 'Error'}, {path: 'ObjKey'}], formatter: '.formatEditVisible' }"
-                                            press=".onEditDocument"/>
+                    <!-- Row-level visualize (eye) button: opens PDF for this row without selecting the table row -->
+                    <Button id="idRowVisualizeButton"
+                        icon="sap-icon://show"
+                        type="Transparent"
+                        tooltip="{i18n>visualize}"
+                        press=".onRowVisualizePress"/>
                                         <Button id="idDownloadButton" icon="sap-icon://download" type="Transparent" tooltip="{i18n>download}" press=".onDownloadDocument"/>
                                     </HBox>
                                 </table:template>
@@ -137,16 +147,6 @@
                 </content>
             </Panel>
         </f:content>
-        <f:footer>
-            <Toolbar id="idFooterToolbar">
-                <ToolbarSpacer id="idFooterSpacer"/>
-                <Button id="idVisualizeButton"
-                       text="{i18n>visualize}" 
-                       icon="sap-icon://pdf-reader"
-                       press=".onVisualizeDocument"
-                       enabled="{viewModel>/hasSelection}"
-                       type="Emphasized"/>
-            </Toolbar>
-        </f:footer>
+        <!-- Footer removed: per-row visualize button exists in the Actions column -->
     </f:DynamicPage>
 </mvc:View>
