@@ -6,22 +6,52 @@ sap.ui.define([
     "sap/ui/model/FilterOperator",
     "sap/ui/model/Sorter",
     "sap/ui/core/Fragment",
-    "sap/m/SelectDialog",
-    "sap/m/StandardListItem"
+    "sap/m/Popover",
+    "sap/m/List",
+    "sap/m/StandardListItem",
+    "sap/m/MessageBox"
 ],
-function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, SelectDialog, StandardListItem) {
+function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, Popover, List, StandardListItem, MessageBox) {
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.DocumentList", {
        
         /**
-         * Formatter para mostrar el status: 'Pendiente' si ObjKey vacío, si no mostrar vacío
+         * Formatter para el campo Status basado en el campo Error:
+         * - Si Error contiene 'P' -> 'Pendiente'
+         * - Si Error contiene 'E' -> 'Error'
+         * - Si Error está vacío -> 'OK'
+         * La comprobación es case-insensitive y acepta cualquier representación que contenga las letras indicadas.
          */
-        formatStatusText: function(v) {
-            if (!v || (typeof v === 'string' && v.trim() === '')) {
-                return 'Pendiente';
+        formatStatusText: function(vError) {
+            try {
+                // Null/empty -> OK
+                if (vError === null || vError === undefined) { return 'OK'; }
+
+                // If it's a boolean (e.g., mock data), true -> Error, false -> OK
+                if (typeof vError === 'boolean') {
+                    return vError ? 'Error' : 'OK';
+                }
+
+                // If it's a number (e.g., 1/0), treat 1 as Error
+                if (typeof vError === 'number') {
+                    return vError === 1 ? 'Error' : 'OK';
+                }
+
+                // Strings and other representations
+                var s = String(vError).trim();
+                if (s === '') { return 'OK'; }
+                var sUpper = s.toUpperCase();
+                // Priority: 'P' (Pendiente) first, then 'E' or ABAP 'X' or '1' -> Error
+                if (sUpper.indexOf('P') !== -1) { return 'Pendiente'; }
+                if (sUpper.indexOf('E') !== -1) { return 'Error'; }
+                if (sUpper.indexOf('X') !== -1) { return 'Error'; }
+                if (sUpper.indexOf('1') !== -1) { return 'Error'; }
+                // Fallback: use truthy normalization
+                return this._isTrueLike(vError) ? 'Error' : 'OK';
+            } catch (e) {
+                return 'OK';
             }
-            return '';
         },
 
         /**
@@ -217,102 +247,66 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
             }
         },
 
-        onDestinationDialogConfirm: function() {
-            var that = this;
-            if (!this._destinationDialog) {
-                return;
-            }
-            var oDestModel = this._destinationDialog.getModel("destination");
-            var sNewDest = oDestModel ? oDestModel.getProperty("/newDestination") : "";
-            // cerrar diálogo
-            this._destinationDialog.close();
-
-            // Recuperar la fila original que abrió el diálogo
-            var oRowData = this._destinationRow || {};
-            // Actualizar destino en la fila temporal antes de abrir el DynamicEditDialog
-            oRowData.Destination = sNewDest;
-
-            // Llamada OData para obtener los campos requeridos según el destino seleccionado
-            var oModel = this.getModel();
-            oModel.read("/RequiredFieldsSet", {
-                filters: [new sap.ui.model.Filter("Destination", sap.ui.model.FilterOperator.EQ, sNewDest)],
-                success: function(oResult) {
-                    var aFields = [];
-                    if (oResult && oResult.results) {
-                        aFields = oResult.results.map(function(o){
-                            return {
-                                field: o.FieldName,
-                                description: o.Description || ""
-                            };
-                        });
-                    }
-                    that._openDynamicEditDialog(oRowData, aFields);
-                    // limpiar referencia temporal
-                    that._destinationRow = null;
-                },
-                error: function() {
-                    that.showErrorMessage("No se pudieron obtener los campos requeridos para el destino seleccionado");
-                }
-            });
-        },
-
-        onDestinationDialogCancel: function() {
-            if (this._destinationDialog) {
-                this._destinationDialog.close();
-            }
-        },
-
-        /**
-         * Value help for destination input: open a SelectDialog with values from DestinationAssign
-         */
         onDestinationValueHelp: function(oEvent) {
             var that = this;
-            // Create or open the SelectDialog
-            if (!this._destinationValueHelp) {
-                this._destinationValueHelp = new SelectDialog({
-                    title: "Seleccionar destino",
+            var oSource = oEvent.getSource();
+            this._destinationValueHelpSource = oSource;
+
+            if (!this._destinationPopover) {
+                this._destinationPopoverList = new List({
                     noDataText: "No hay destinos disponibles",
                     items: {
                         path: "/items",
-                        template: new StandardListItem({
-                            title: "{text}",
-                            description: "{key}"
-                        })
-                    },
-                    confirm: function(oEvt) {
-                        var oSel = oEvt.getParameter("selectedItem");
-                        if (oSel) {
-                            var oCtx = oSel.getBindingContext();
-                            var sKey = oCtx.getProperty("key");
-                            // set value to destination model
-                            var oDestModel = that._destinationDialog && that._destinationDialog.getModel("destination");
-                            if (oDestModel) {
-                                oDestModel.setProperty("/newDestination", sKey);
+                        template: new StandardListItem({ title: "{text}", description: "{key}", type: "Active" })
+                    }
+                });
+
+                this._destinationPopover = new Popover({ showHeader: false, content: [ this._destinationPopoverList ], placement: "Bottom" });
+
+                this._destinationPopoverList.attachItemPress(function(oEvt) {
+                    var oItem = oEvt.getParameter('listItem'); if (!oItem) { return; }
+                    var oCtx = oItem.getBindingContext(); var sKey = oCtx ? oCtx.getProperty('key') : null;
+                    var oTrigger = that._destinationValueHelpSource;
+                    if (sKey && oTrigger) {
+                        var oDestModel = (that._destinationDialog && that._destinationDialog.getModel('destination')) || oTrigger.getModel('destination');
+                        if (oDestModel) {
+                            oDestModel.setProperty('/newDestination', sKey);
+                        } else {
+                            var oCtxRow = oTrigger.getBindingContext();
+                            if (oCtxRow) {
+                                try { oCtxRow.getModel().setProperty(oCtxRow.getPath() + '/Destination', sKey); } catch (e) { var oRowObj = oCtxRow.getObject(); if (oRowObj) { oRowObj.Destination = sKey; } }
+                                var oRowData = oCtxRow.getObject();
+                                that.getModel().read('/RequiredFieldsSet', {
+                                    filters: [ new Filter('Destination', FilterOperator.EQ, sKey) ],
+                                    success: function(oResult) {
+                                        var aFields = [];
+                                        if (oResult && oResult.results) {
+                                            aFields = oResult.results.map(function(o){
+                                                return { field: o.Field_id || o.FieldId || o.Field || '', description: o.Description || '', table: o.Table || '', tableField: o.TableField || '', type: o.Type || '', length: o.Length || '' };
+                                            });
+                                        }
+                                        that._openDynamicEditDialog(oRowData, aFields);
+                                    },
+                                    error: function() { that.showErrorMessage('No se pudieron obtener los campos requeridos para el destino seleccionado'); }
+                                });
                             }
                         }
-                        this.close();
                     }
+                    that._destinationPopover.close();
                 });
             }
 
-            // Read data from OData entity set DestinationAssign
             var oModel = this.getModel();
-            oModel.read("/DestinationAssignSet", {
+            oModel.read('/DestinationAssignSet', {
                 success: function(oData) {
                     var a = oData && oData.results ? oData.results : [];
-                    var aItems = a.map(function(o){
-                        return {
-                            key: o.Destination || o.Key || o.Id || o.Name || "",
-                            text: o.Description || o.Destination || o.Name || o.Key || ""
-                        };
-                    });
+                    var aItems = a.map(function(o){ return { key: o.Destination || o.Key || o.Id || o.Name || '', text: o.Description || o.Destination || o.Name || o.Key || '' }; });
                     var oListModel = new JSONModel({ items: aItems });
-                    that._destinationValueHelp.setModel(oListModel);
-                    that._destinationValueHelp.open();
+                    that._destinationPopoverList.setModel(oListModel);
+                    that._destinationPopoverList.bindItems({ path: '/items', template: new StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
+                    that._destinationPopover.openBy(oSource);
                 },
-                error: function() {
-                    that.showErrorMessage("No se pudieron obtener los destinos");
-                }
+                error: function() { that.showErrorMessage('No se pudieron obtener los destinos'); }
             });
         },
 
@@ -339,11 +333,15 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
                 success: function(oResult) {
                     var aFields = [];
                     if (oResult && oResult.results) {
-                        // Cada resultado puede tener FieldName y Description
+                        // Map server properties exactly (metadata: Field_id, Table, TableField, Type, Description, Length)
                         aFields = oResult.results.map(function(o){
                             return {
-                                field: o.FieldName,
-                                description: o.Description || ""
+                                field: o.Field_id || o.FieldId || o.Field || "",
+                                description: o.Description || "",
+                                table: o.Table || "",
+                                tableField: o.TableField || "",
+                                type: o.Type || "",
+                                length: o.Length || ""
                             };
                         });
                     }
@@ -390,6 +388,8 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
 
             // Construir estructura del modelo: copiar oData y preparar espacio para los campos requeridos
             var oModelData = Object.assign({}, oData);
+            // store destination for deep-entity validation
+            this._sDestination = oModelData.Destination || "";
             oModelData.requiredFields = {};
             oModelData._fieldMap = []; // [{ key: 'f0', original: 'FIELDNAME' }, ...]
 
@@ -409,7 +409,7 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
                 if (oModelData._fieldMap.some(function(m){ return m.key === sKey; })) {
                     sKey = sKey + "_" + idx;
                 }
-                oModelData._fieldMap.push({ key: sKey, original: sOrig });
+                oModelData._fieldMap.push({ key: sKey, original: sOrig, table: oField.table || "", tableField: oField.tableField || "", type: oField.type || "", description: oField.description || "", length: oField.length || "" });
                 // Inicializar valor (si ya existe en oData, usarlo)
                 oModelData.requiredFields[sKey] = oData && oData[sOrig] ? oData[sOrig] : "";
 
@@ -437,31 +437,158 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, S
                 return;
             }
             var oDataModel = oEditModel.getData();
-            // Emular una edición normal: partir de los datos originales y sobrescribir
-            // los campos requeridos con los valores introducidos por el usuario.
-            var oPayload = Object.assign({}, oDataModel);
-
-            // Concatenar todos los inputs en ObjKey separados por ';' (preservando posiciones vacías)
-            var aConcats = [];
+            // Build aChildren array for deep-entity validation (one object per required field)
+            var aChildren = [];
             if (oDataModel._fieldMap && Array.isArray(oDataModel._fieldMap)) {
                 oDataModel._fieldMap.forEach(function(m) {
-                    var v = (oDataModel.requiredFields && (m.key in oDataModel.requiredFields)) ? oDataModel.requiredFields[m.key] : "";
-                    aConcats.push(v != null ? String(v) : "");
+                    var value = (oDataModel.requiredFields && (m.key in oDataModel.requiredFields)) ? oDataModel.requiredFields[m.key] : "";
+                    var sValue = (value != null && String(value).trim() !== "") ? String(value) : "SIN ASIGNAR";
+                    aChildren.push({
+                        Destination: this._sDestination || "",
+                        Field_id: m.original || "",
+                        Table: m.table || "",
+                        TableField: m.tableField || m.original || "",
+                        Type: m.type || "",
+                        Description: m.description || "",
+                        Length: m.length || ((sValue) ? String(sValue.length) : ""),
+                        InputValue: sValue
+                    });
+                }.bind(this));
+            }
+
+            var oDeepPayload = {
+                Destination: this._sDestination || "",
+                NavRequiredFields: { results: aChildren }
+            };
+
+            // Debug: log payload to help diagnose transformation errors
+            try {
+                console.log("DestinationAssign deep payload:", JSON.stringify(oDeepPayload, null, 2));
+            } catch (e) { /* ignore */ }
+
+            // Basic validation before calling the service: ensure Field_id present in each child
+            var aMissingFieldId = aChildren.filter(function(c){ return !c.Field_id || String(c.Field_id).trim() === ""; });
+            if (aMissingFieldId.length > 0) {
+                console.error("DestinationAssign validation aborted: missing Field_id for some required fields:", aMissingFieldId);
+                // Inform user and stop
+                this.showErrorMessage("Hay campos requeridos sin identificador (Field_id). Revisa la configuración de los campos requeridos para el destino.");
+                return;
+            }
+
+            // Clear previous value states
+            if (oDataModel._fieldMap && Array.isArray(oDataModel._fieldMap)) {
+                oDataModel._fieldMap.forEach(function(m) {
+                    var sInputId = (oDialog.createId) ? oDialog.createId("input_" + m.key) : (oDialog.getId() + "--input_" + m.key);
+                    var oInput = sap.ui.getCore().byId(sInputId);
+                    if (oInput && oInput.setValueState) {
+                        oInput.setValueState(sap.ui.core.ValueState.None);
+                        oInput.setValueStateText("");
+                    }
                 });
             }
-            var sConcatenated = aConcats.join(";");
 
-            // Construir payload equivalente al del diálogo de edición: enviar DocId,
-            // Destination y ObjKey (concatenado). No enviar propiedades con nombres
-            // desconocidos como 'f0' que el backend rechazará.
-            var oFinalPayload = {
-                DocId: oDataModel.DocId
-            };
-            if (oDataModel.Destination) { oFinalPayload.Destination = oDataModel.Destination; }
-            if (sConcatenated !== "") { oFinalPayload.ObjKey = sConcatenated; }
+            // Defensive: ensure we have a destination to validate against
+            if (!this._sDestination || String(this._sDestination).trim() === "") {
+                this.showErrorMessage("Destino no válido. Indica un destino antes de validar.");
+                return;
+            }
 
-            // Llamar a la misma rutina centralizada de update
-            this._saveEntry(oFinalPayload, oDialog);
+            // Call deep entity create on DestinationAssignSet for validation
+            var oModel = this.getModel();
+            var that = this;
+            oModel.create("/DestinationAssignSet", oDeepPayload, {
+                success: function(oResponseData) {
+                    // En caso de éxito de validación, ofrecer opción de Actualizar o Cancelar
+                    MessageBox.show("Validación correcta", {
+                        title: "Validación",
+                        actions: ["Actualizar", MessageBox.Action.CANCEL],
+                        emphasizedAction: "Actualizar",
+                        onClose: function(sAction) {
+                            if (sAction === "Actualizar") {
+                                try {
+                                    // Reconstruir objeto para actualización en PdfListSet
+                                    var oCurrent = oDialog.getModel("editDynamic").getData();
+                                    // Construir ObjKey a partir de los valores introducidos (InputValue)
+                                    var aParts = [];
+                                    if (oCurrent._fieldMap && Array.isArray(oCurrent._fieldMap)) {
+                                        oCurrent._fieldMap.forEach(function(m) {
+                                            var val = (oCurrent.requiredFields && (m.key in oCurrent.requiredFields)) ? oCurrent.requiredFields[m.key] : "";
+                                            var sVal = (val != null && String(val).trim() !== "") ? String(val) : "";
+                                            aParts.push(sVal);
+                                        });
+                                    }
+                                    var sObjKey = aParts.join("") || (oCurrent.ObjKey || "");
+                                    // Truncar a 70 (metadata)
+                                    if (sObjKey.length > 70) { sObjKey = sObjKey.substring(0,70); }
+
+                                    // Preparar payload de actualización: tomar DocId y ObjKey (y Destination si procede)
+                                    var oPayload = {
+                                        DocId: oCurrent.DocId,
+                                        ObjKey: sObjKey,
+                                        Destination: oCurrent.Destination || undefined
+                                    };
+                                    // Llamar a la rutina central de update
+                                    that._saveEntry(oPayload, oDialog);
+                                } catch (e) {
+                                    that.showErrorMessage("Error preparando la actualización: " + (e.message || e));
+                                }
+                            } else {
+                                // Cancel: no hacer nada, solo cerrar el MessageBox (se cierra automáticamente)
+                            }
+                        }
+                    });
+                },
+                error: function(oError) {
+                    // Enhanced logging for debugging: log full OData error and responseText
+                    console.error("DestinationAssign create error:", oError);
+                    var sRaw = oError && (oError.responseText || oError.response || oError.body || "");
+                    console.error("DestinationAssign responseText:", sRaw);
+                    // Try to parse OData error details
+                    var aErrors = null;
+                    try {
+                        var oParsed = typeof sRaw === 'string' ? JSON.parse(sRaw) : sRaw;
+                        if (Array.isArray(oParsed)) { aErrors = oParsed; }
+                        else if (oParsed && oParsed.error && oParsed.error.innererror && oParsed.error.innererror.errordetails) {
+                            aErrors = oParsed.error.innererror.errordetails;
+                        } else if (oParsed && oParsed.error && oParsed.error.message) {
+                            aErrors = [{ message: oParsed.error.message }];
+                        }
+                    } catch (e) {
+                        // non-json response; keep aErrors null
+                    }
+
+                    if (aErrors && aErrors.length) {
+                        aErrors.forEach(function(err) {
+                            var sMsg = err.message || err.Message || (err.error && err.error.message) || "Error de validación";
+                            var targets = err.targets || err.Targets || [];
+                            if (!targets || targets.length === 0) { targets = err.target ? [err.target] : (err.Target ? [err.Target] : []); }
+                            targets.forEach(function(t) {
+                                var sField = String(t).replace(/^.*\//, '').replace(/[^A-Za-z0-9_]/g, '');
+                                // find matching field in _fieldMap
+                                if (oDataModel._fieldMap && Array.isArray(oDataModel._fieldMap)) {
+                                    oDataModel._fieldMap.forEach(function(m) {
+                                        if (m.original && m.original.toString().toLowerCase() === sField.toLowerCase()) {
+                                            var sInputId = (oDialog.createId) ? oDialog.createId("input_" + m.key) : (oDialog.getId() + "--input_" + m.key);
+                                            var oInput = sap.ui.getCore().byId(sInputId);
+                                            if (oInput && oInput.setValueState) {
+                                                oInput.setValueState(sap.ui.core.ValueState.Error);
+                                                oInput.setValueStateText(sMsg);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        that.showErrorMessage("Validación fallida. Corrige los campos marcados.");
+                    } else {
+                        // Mostrar detalle crudo en consola y notificar al usuario con mensaje resumido
+                        that.showErrorMessage("Error al validar los campos. Comprueba la consola para más detalles.");
+                        // También mostrar MessageBox con un fragmento del mensaje para depuración (no demasiado largo)
+                        var sShort = (typeof sRaw === 'string') ? sRaw.substring(0,1000) : JSON.stringify(sRaw);
+                        MessageBox.error("Error en validación: " + (sShort || "sin detalle"));
+                    }
+                }
+            });
         },
 
         /**

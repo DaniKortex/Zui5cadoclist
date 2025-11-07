@@ -4,7 +4,7 @@
       <!-- Los campos se generarán dinámicamente desde el controlador -->
     </VBox>
     <beginButton>
-      <Button text="Guardar" type="Emphasized" press=".onDynamicEditDialogSave"/>
+      <Button text="Validar" type="Emphasized" press=".onDynamicEditDialogSave"/>
     </beginButton>
     <endButton>
       <Button text="Cancelar" press=".onDynamicEditDialogCancel"/>

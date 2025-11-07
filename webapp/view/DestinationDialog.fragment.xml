@@ -1,13 +1,8 @@
+<!-- DestinationDialog fragment intentionally removed.
+     Value-help functionality has been migrated to an inline Popover in the controller.
+     This placeholder keeps the resource available to avoid missing-resource errors.
+-->
+
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-  <Dialog id="idDestinationDialog" title="Indique nuevo destino" draggable="true" resizable="true" contentWidth="400px">
-    <VBox id="idDestinationVBox" class="sapUiMediumMargin">
-  <Input id="idNewDestinationInput" value="{destination>/newDestination}" showValueHelp="true" valueHelpRequest=".onDestinationValueHelp" placeholder="Nuevo destino"/>
-    </VBox>
-    <beginButton>
-      <Button id="idDestinationOkButton" text="Aceptar" type="Emphasized" press=".onDestinationDialogConfirm"/>
-    </beginButton>
-    <endButton>
-      <Button id="idDestinationCancelButton" text="Cancelar" press=".onDestinationDialogCancel"/>
-    </endButton>
-  </Dialog>
+  <!-- removed -->
 </core:FragmentDefinition>

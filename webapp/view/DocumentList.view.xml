@@ -66,7 +66,7 @@
                             <table:Column id="idDestinationColumn" width="10rem">
                                 <Label id="idDestinationLabel" text="Destino"/>
                                 <table:template>
-                                    <Link id="idDestinationLink" text="{ path: 'Destination', formatter: '.formatDestinationText' }" press=".onDestinationPress"/>
+                                    <Input id="idDestinationInput" value="{Destination}" showValueHelp="true" valueHelpRequest=".onDestinationValueHelp" editable="true" />
                                 </table:template>
                             </table:Column>
                             <!-- Descripción -->
@@ -102,8 +102,8 @@
                                     <Text id="idModifiedAtText" text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"/>
                                 </table:template>
                             </table:Column>
-                            <!-- Error -->
-                            <table:Column id="idErrorColumn" width="5rem">
+                            <!-- Error (oculto) -->
+                            <table:Column id="idErrorColumn" width="5rem" visible="false">
                                 <Label id="idErrorLabel" text="{i18n>error}"/>
                                 <table:template>
                                     <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatErrorText'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
@@ -128,7 +128,8 @@
                             <table:Column id="idStatusColumn" width="6rem">
                                 <Label id="idStatusLabel" text="Status"/>
                                 <table:template>
-                                    <Text id="idStatusText" text="{path: 'ObjKey', formatter: '.formatStatusText'}"/>
+                                    <!-- Ahora mapeamos el Status desde el campo Error -->
+                                    <Text id="idStatusText" text="{path: 'Error', formatter: '.formatStatusText'}"/>
                                 </table:template>
                             </table:Column>
                         </table:columns>

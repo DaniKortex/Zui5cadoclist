@@ -17,8 +17,8 @@
                 <Property Name="Counter" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
                 <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Car.20"/>
                 <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
-                <NavigationProperty Name="ToImagesNav" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" FromRole="FromRole_ScanDocsListToItem" ToRole="ToRole_ScanDocsListToItem"/>
                 <NavigationProperty Name="NavDestination" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" FromRole="ToRole_AssocScanDocsListDestination" ToRole="FromRole_AssocScanDocsListDestination"/>
+                <NavigationProperty Name="ToImagesNav" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" FromRole="FromRole_ScanDocsListToItem" ToRole="ToRole_ScanDocsListToItem"/>
             </EntityType>
             <EntityType Name="DestinationAssign" sap:content-version="1">
                 <Key>
@@ -76,7 +76,7 @@
                 <Property Name="FileName" Type="Edm.String" MaxLength="80" sap:unicode="false" sap:label="Archivo" sap:creatable="false"/>
                 <Property Name="Username" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="Usuario" sap:creatable="false"/>
                 <Property Name="ModifiedAt" Type="Edm.DateTime" Precision="0" sap:unicode="false" sap:label="Fecha" sap:creatable="false"/>
-                <Property Name="Error" Type="Edm.Boolean" sap:unicode="false" sap:label="Error" sap:creatable="false"/>
+                <Property Name="Error" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="Error Status" sap:creatable="false"/>
                 <Property Name="ErrorMessage" Type="Edm.String" sap:unicode="false" sap:label="ErrorMessage" sap:creatable="false"/>
                 <Property Name="MimeType" Type="Edm.String" MaxLength="50" sap:unicode="false" sap:label="MimeType" sap:creatable="false"/>
                 <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false"/>
