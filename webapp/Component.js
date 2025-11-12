@@ -21,6 +21,11 @@ sap.ui.define([
              * @override
              */
             init: function () {
+                // Ensure UI5 core language is set to Spanish for this app (helps controls like SmartFilterBar)
+                try {
+                    sap.ui.getCore().getConfiguration().setLanguage("es");
+                } catch (e) { /* ignore if core not available */ }
+
                 // call the base component's init function
                 UIComponent.prototype.init.apply(this, arguments);
 

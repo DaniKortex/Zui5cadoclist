@@ -80,7 +80,7 @@
                 <Property Name="ErrorMessage" Type="Edm.String" sap:unicode="false" sap:label="ErrorMessage" sap:creatable="false"/>
                 <Property Name="MimeType" Type="Edm.String" MaxLength="50" sap:unicode="false" sap:label="MimeType" sap:creatable="false"/>
                 <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false"/>
-                <Property Name="Pdf" Type="Edm.String" sap:unicode="false" sap:label="Pdf" sap:creatable="false"/>
+                <Property Name="Pdf" Type="Edm.Binary" sap:unicode="false" sap:label="Pdf" sap:creatable="false"/>
             </EntityType>
             <Association Name="AssocDestinationRequiredFields" sap:content-version="1">
                 <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" Multiplicity="0..1" Role="FromRole_AssocDestinationRequiredFields"/>
