@@ -1,1 +1,18 @@
 /* Enter your custom styles here */
+/* Sticky header for sap.ui.table: the controller sets --table-header-top on the table DOM */
+.stickyTableHeader .sapUiTableColHdr,
+.stickyTableHeader .sapUiTableColHdrScr,
+.stickyTableHeader .sapUiTableColHdrCnt {
+	position: sticky;
+	top: var(--table-header-top, 0px);
+	z-index: 1100;
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+/* Ensure header cells retain background */
+.stickyTableHeader .sapUiTableColHdrInner,
+.stickyTableHeader .sapUiTableColHdr th,
+.stickyTableHeader .sapUiTableColHdr .sapUiTableColHdrCell {
+	background: inherit;
+}

@@ -104,6 +104,44 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
         },
 
         /**
+         * After rendering: remove internal table scrollbar by expanding visibleRowCount
+         * to the number of results, and compute sticky header offset so headers stay
+         * visible when the DynamicPage scrolls.
+         */
+        onAfterRendering: function () {
+            try {
+                var oTable = this.byId("idDocumentsTable");
+                if (!oTable) { return; }
+                var oBinding = oTable.getBinding("rows");
+                if (oBinding) {
+                    // When data arrives, set visibleRowCount to results length so the table
+                    // won't show its own scrollbar and the DynamicPage will provide a single scroll.
+                    oBinding.attachDataReceived(function (oEvt) {
+                        var iCount = 0;
+                        var oData = oEvt.getParameter && oEvt.getParameter('data');
+                        if (oData && Array.isArray(oData.results)) {
+                            iCount = oData.results.length;
+                        } else if (oBinding.getLength) {
+                            iCount = oBinding.getLength();
+                        }
+                        if (iCount && iCount > 0) {
+                            try { oTable.setVisibleRowCount(iCount); } catch (e) { /* ignore */ }
+                        }
+                        // After rows are set, recompute sticky header top offset
+                        this._updateStickyHeaderTop();
+                    }.bind(this));
+                }
+
+                // Initial compute for header offset and attach resize handler
+                this._updateStickyHeaderTop();
+                if (!this._fnStickyResize) {
+                    this._fnStickyResize = this._updateStickyHeaderTop.bind(this);
+                    window.addEventListener('resize', this._fnStickyResize);
+                }
+            } catch (e) { /* silent */ }
+        },
+
+        /**
          * Test data connection
          * @private
          */
@@ -120,6 +158,46 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                         console.error("Error reading PdfListSet: ", oError);
                     }
                 });
+            }
+        },
+
+        /**
+         * Compute and apply the DynamicPage header height as CSS variable for the table
+         * so CSS can position the sticky header correctly.
+         * @private
+         */
+        _updateStickyHeaderTop: function() {
+            try {
+                var oTable = this.byId("idDocumentsTable");
+                if (!oTable) { return; }
+                var oDP = this.byId("idDocumentListDynamicPage");
+                var iTop = 0;
+                if (oDP && oDP.getDomRef) {
+                    var oDom = oDP.getDomRef();
+                    if (oDom) {
+                        // Prefer title wrapper, else header
+                        var elTitle = oDom.querySelector('.sapFDynamicPageTitleWrapper') || oDom.querySelector('.sapFDynamicPageTitle');
+                        var elHeader = oDom.querySelector('.sapFDynamicPageHeader');
+                        if (elTitle) { iTop += Math.ceil(elTitle.getBoundingClientRect().height); }
+                        if (elHeader) { iTop += Math.ceil(elHeader.getBoundingClientRect().height); }
+                        if (iTop === 0) {
+                            var hdr = oDom.querySelector('.sapFDynamicPageHeader') || oDom.querySelector('.sapFPageHeader') || oDom.querySelector('.sapFDynamicPageTitle');
+                            if (hdr) { iTop = Math.ceil(hdr.getBoundingClientRect().height); }
+                        }
+                    }
+                }
+                var tDom = oTable.getDomRef();
+                if (tDom && tDom.style) { tDom.style.setProperty('--table-header-top', iTop + 'px'); }
+            } catch (e) { /* ignore */ }
+        },
+
+        /**
+         * Cleanup on exit: remove window resize handler if attached.
+         */
+        onExit: function() {
+            if (this._fnStickyResize) {
+                try { window.removeEventListener('resize', this._fnStickyResize); } catch (e) { /* ignore */ }
+                this._fnStickyResize = null;
             }
         },
 

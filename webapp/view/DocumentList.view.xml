@@ -78,10 +78,10 @@
                             </table:Column>
                             <!-- Tipo de Documento -->
                             <!-- Key (ObjKey) -->
-                            <table:Column id="idObjKeyColumn" width="14rem">
+                            <table:Column id="idObjKeyColumn" width="12rem">
                                 <Label text="Clave Objeto"/>
                                 <table:template>
-                                    <HBox>
+                                    <HBox alignItems="Center">
                                         <!-- ObjKey as plain text (not clickable) -->
                                         <Text id="idObjKeyText" text="{ObjKey}" />
                                         <!-- Edit button opens the same dialog as before; visible only when allowed -->
@@ -95,7 +95,7 @@
                                 </table:template>
                             </table:Column>
                             <!-- Usuario -->
-                            <table:Column id="idUsernameColumn" width="10rem">
+                            <table:Column id="idUsernameColumn" width="8rem">
                                 <Label id="idUsernameLabel" text="{i18n>username}"/>
                                 <table:template>
                                     <Text id="idUsernameText" text="{Username}"/>
