@@ -17,8 +17,8 @@
                 <Property Name="Counter" Type="Edm.String" Nullable="false" sap:unicode="false" sap:label="Contador"/>
                 <Property Name="Destination" Type="Edm.String" Nullable="false" MaxLength="20" sap:unicode="false" sap:label="Car.20"/>
                 <Property Name="TypeObj" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="Tipo objeto"/>
-                <NavigationProperty Name="NavDestination" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" FromRole="ToRole_AssocScanDocsListDestination" ToRole="FromRole_AssocScanDocsListDestination"/>
                 <NavigationProperty Name="ToImagesNav" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" FromRole="FromRole_ScanDocsListToItem" ToRole="ToRole_ScanDocsListToItem"/>
+                <NavigationProperty Name="NavDestination" Relationship="ZOD_CA_DOCUMENTS_SCAN_SRV.AssocScanDocsListDestination" FromRole="ToRole_AssocScanDocsListDestination" ToRole="FromRole_AssocScanDocsListDestination"/>
             </EntityType>
             <EntityType Name="DestinationAssign" sap:content-version="1">
                 <Key>
