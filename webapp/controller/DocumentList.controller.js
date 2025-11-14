@@ -68,7 +68,9 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                 sortOrderDocId: undefined,
                 sortOrderModifiedAt: undefined,
                 hasSelection: false,
-                selectedItem: null
+                selectedItem: null,
+                onlyErrors: false,
+                onlyPending: false
             });
             this.setModel(oViewModel, "viewModel");
 
@@ -963,14 +965,48 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
          * SmartFilterBar search event: collect SFB filters and custom checkbox, apply to rows binding
          */
         onSmartFilterBarSearch: function () {
+            // Delegate to centralized filter applier so quick-filters and SFB combine consistently
+            this._applyFilters();
+        },
+
+        /**
+         * Toggle handler for quick filter 'only errors'
+         */
+        onToggleErrorFilter: function (oEvent) {
+            var bPressed = !!(oEvent && oEvent.getSource && oEvent.getSource().getPressed && oEvent.getSource().getPressed());
+            var oViewModel = this.getModel("viewModel");
+            // If the user is activating this filter, ensure the other quick-filter is deactivated
+            if (bPressed) {
+                oViewModel.setProperty("/onlyPending", false);
+            }
+            oViewModel.setProperty("/onlyErrors", bPressed);
+            this._applyFilters();
+        },
+
+        /**
+         * Toggle handler for quick filter 'only pending' (Error = 'P')
+         */
+        onTogglePendingFilter: function (oEvent) {
+            var bPressed = !!(oEvent && oEvent.getSource && oEvent.getSource().getPressed && oEvent.getSource().getPressed());
+            var oViewModel = this.getModel("viewModel");
+            // If the user is activating this filter, ensure the other quick-filter is deactivated
+            if (bPressed) {
+                oViewModel.setProperty("/onlyErrors", false);
+            }
+            oViewModel.setProperty("/onlyPending", bPressed);
+            this._applyFilters();
+        },
+
+        /**
+         * Combine SmartFilterBar filters with quick filters (like onlyErrors) and apply them
+         * as Application filters on the table binding.
+         * @private
+         */
+        _applyFilters: function () {
             var oSFB = this.byId("idSmartFilterBar");
             var aFilters = oSFB ? (oSFB.getFilters() || []) : [];
-            // custom checkbox
-            var oOnlyErrors = this.byId("idSFBOnlyErrorsCheck");
-            if (oOnlyErrors && oOnlyErrors.getSelected()) {
-                aFilters.push(new Filter("Error", FilterOperator.EQ, true));
-            }
-            // basic search value -> OR across several text fields
+
+            // Basic search value -> OR across several text fields (keep existing behavior)
             if (oSFB && oSFB.getBasicSearchValue) {
                 var sQuery = (oSFB.getBasicSearchValue() || "").trim();
                 if (sQuery) {
@@ -982,12 +1018,27 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                     ], false));
                 }
             }
+
+            // Quick filters: only errors -> Error = 'E', only pending -> Error = 'P'
+            var oViewModel = this.getModel("viewModel");
+            var bOnlyErrors = oViewModel && oViewModel.getProperty("/onlyErrors");
+            var bOnlyPending = oViewModel && oViewModel.getProperty("/onlyPending");
+            if (bOnlyErrors && bOnlyPending) {
+                // Both pressed -> show rows with Error = 'E' OR Error = 'P'
+                var fE = new Filter("Error", FilterOperator.EQ, 'E');
+                var fP = new Filter("Error", FilterOperator.EQ, 'P');
+                aFilters.push(new Filter([fE, fP], false));
+            } else if (bOnlyErrors) {
+                aFilters.push(new Filter("Error", FilterOperator.EQ, 'E'));
+            } else if (bOnlyPending) {
+                aFilters.push(new Filter("Error", FilterOperator.EQ, 'P'));
+            }
+
             var oTable = this.byId("idDocumentsTable");
             var oBinding = oTable && oTable.getBinding("rows");
             if (oBinding) {
-                // Clear any previous Control filters (e.g., from column menu) to avoid conflicts
+                // Clear control filters to avoid conflicts
                 oBinding.filter([], sap.ui.model.FilterType.Control);
-                // Apply SmartFilterBar filters as Application filters (server-side)
                 oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
             }
         },

@@ -33,6 +33,11 @@
                             <smartFilterBar:ControlConfiguration id="idTypeDocControlConfiguration" key="TypeDoc" visible="true" visibleInAdvancedArea="false"/>
                         </smartFilterBar:controlConfiguration>
                     </smartFilterBar:SmartFilterBar>
+                    <!-- Quick filters toolbar (error toggle) -->
+                    <Toolbar id="idQuickFilterToolbar" design="Transparent">
+                        <ToggleButton id="idQuickFilterOnlyErrors" icon="sap-icon://message-error" text="{i18n>onlyErrors}" pressed="{viewModel>/onlyErrors}" press=".onToggleErrorFilter" />
+                        <ToggleButton id="idQuickFilterOnlyPending" icon="sap-icon://activity-2" text="{i18n>onlyPending}" pressed="{viewModel>/onlyPending}" press=".onTogglePendingFilter" />
+                    </Toolbar>
                     <!-- Documents sap.ui.table.Table -->
                     <table:Table id="idDocumentsTable"
                                  rows="{ path: '/PdfListSet', parameters: { operationMode: 'Server' } }"
