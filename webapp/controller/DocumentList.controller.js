@@ -116,8 +116,9 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                 if (!oTable) { return; }
                 var oBinding = oTable.getBinding("rows");
                 if (oBinding) {
-                    // When data arrives, set visibleRowCount to results length so the table
-                    // won't show its own scrollbar and the DynamicPage will provide a single scroll.
+                    // When data arrives, adjust visibleRowCount to at most 10 rows
+                    // so the table shows a maximum of 10 visible rows and retains
+                    // its internal scrollbar for additional rows.
                     oBinding.attachDataReceived(function (oEvt) {
                         var iCount = 0;
                         var oData = oEvt.getParameter && oEvt.getParameter('data');
@@ -127,7 +128,11 @@ function (BaseController, JSONModel, Filter, FilterOperator, Sorter, Fragment, P
                             iCount = oBinding.getLength();
                         }
                         if (iCount && iCount > 0) {
-                            try { oTable.setVisibleRowCount(iCount); } catch (e) { /* ignore */ }
+                            try {
+                                var iMax = 10;
+                                var iVisible = (iCount <= iMax) ? iCount : iMax;
+                                oTable.setVisibleRowCount(iVisible);
+                            } catch (e) { /* ignore */ }
                         }
                         // After rows are set, recompute sticky header top offset
                         this._updateStickyHeaderTop();

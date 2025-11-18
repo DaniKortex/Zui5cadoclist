@@ -41,7 +41,7 @@
                     <!-- Documents sap.ui.table.Table -->
                     <table:Table id="idDocumentsTable"
                                  rows="{ path: '/PdfListSet', parameters: { operationMode: 'Server' } }"
-                                 visibleRowCount="20"
+                                 visibleRowCount="10"
                                  busyIndicatorDelay="{viewModel>/delay}"
                                  busy="{viewModel>/busy}"
                                  selectionMode="Single"
