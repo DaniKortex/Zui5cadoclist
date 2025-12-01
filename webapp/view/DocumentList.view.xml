@@ -1,157 +1,291 @@
-<mvc:View controllerName="zui5cadoclist.controller.DocumentList"
-    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+<mvc:View
+    controllerName="zui5cadoclist.controller.DocumentList"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
     xmlns="sap.m"
     xmlns:table="sap.ui.table"
     xmlns:smartFilterBar="sap.ui.comp.smartfilterbar"
-    xmlns:f="sap.f">
-    <f:DynamicPage id="idDocumentListDynamicPage" showFooter="true">
-        <f:title>
-            <f:DynamicPageTitle>
-                <f:heading>
-                    <Title id="idDocumentosDigitalizadosTitle" text="Documentos digitalizados" level="H2"/>
-                </f:heading>
-                <f:actions>
-                    <Toolbar id="idHeaderToolbar" design="Transparent">
-                        <ToolbarSpacer id="idSpacerToolbar1"/>
-                        <Button id="idRefreshButton" icon="sap-icon://refresh" 
-                               tooltip="{i18n>refresh}" 
-                               press=".onRefresh"/>
-                    </Toolbar>
-                </f:actions>
-            </f:DynamicPageTitle>
-        </f:title>
+    xmlns:f="sap.f"
+    xmlns:sap.ui.fl="sap.ui.fl"
+>
+    <f:DynamicPage
+        id="idDocumentListDynamicPage"
+        fitContent="false"
+    >
+        <f:header>
+            <f:DynamicPageHeader pinnable="false">
+                <smartFilterBar:SmartFilterBar
+                    id="idSmartFilterBar"
+                    entitySet="PdfListSet"
+                    persistencyKey="SmartFilterBar-PdfListSet"
+                    useToolbar="true"
+                    showClearOnFB="true"
+                    showRestoreOnFB="true"
+                    enableBasicSearch="false"
+                    useDateRangeType="true"
+                    initialized="onSFBInitialized"
+                    afterVariantLoad="onSFAfterVariantLoad"
+                    assignedFiltersChanged="onSFBAssignedFiltersChanged"
+                    search="onSmartFilterSearch"
+                />
+            </f:DynamicPageHeader>
+        </f:header>
         <f:content>
-            <Panel id="idDocumentsPanel" class="sapUiResponsiveMargin">
-                <content>
-                    <!-- Smart Filter Bar (basic) -->
-                    <smartFilterBar:SmartFilterBar id="idSmartFilterBar"
-                                                  entitySet="PdfListSet"
-                                                  useToolbar="true">
-                        <smartFilterBar:controlConfiguration>
-                            <smartFilterBar:ControlConfiguration id="idDocIdControlConfiguration" key="DocId" visible="true" visibleInAdvancedArea="false"/>
-                            <smartFilterBar:ControlConfiguration id="idUsernameControlConfiguration" key="Username" visible="true" visibleInAdvancedArea="false"/>
-                            <smartFilterBar:ControlConfiguration id="idTypeDocControlConfiguration" key="TypeDoc" visible="true" visibleInAdvancedArea="false"/>
-                        </smartFilterBar:controlConfiguration>
-                    </smartFilterBar:SmartFilterBar>
-                    <!-- Quick filters toolbar (error toggle) -->
-                    <Toolbar id="idQuickFilterToolbar" design="Transparent">
-                        <ToggleButton id="idQuickFilterOnlyErrors" icon="sap-icon://message-error" text="{i18n>onlyErrors}" pressed="{viewModel>/onlyErrors}" press=".onToggleErrorFilter" />
-                        <ToggleButton id="idQuickFilterOnlyPending" icon="sap-icon://activity-2" text="{i18n>onlyPending}" pressed="{viewModel>/onlyPending}" press=".onTogglePendingFilter" />
-                    </Toolbar>
-                    <!-- Documents sap.ui.table.Table -->
-                    <table:Table id="idDocumentsTable"
-                                 rows="{ path: '/PdfListSet', parameters: { operationMode: 'Server' } }"
-                                 visibleRowCount="10"
-                                 busyIndicatorDelay="{viewModel>/delay}"
-                                 busy="{viewModel>/busy}"
-                                 selectionMode="Single"
-                                 selectionBehavior="Row"
-                                 rowSelectionChange=".onRowSelectionChange">
-                        <table:columns>
-                            <!-- ID -->
-                            <table:Column id="idDocIdColumn" width="7rem" sortProperty="DocId">
-                                <Label id="idDocIdColLabel" text="{i18n>docId}"/>
-                                <table:label>
-                                    <HBox id="idDocIdHeaderHBox">
-                                        <Text id="idDocIdHeaderText" text="{i18n>docId}"/>
-                                    </HBox>
-                                </table:label>
-                                <table:template>
-                                    <ObjectIdentifier id="idDocIdObjectIdentifier" title="{DocId}"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Nombre de fichero -->
-                            <table:Column id="idFileNameColumn" width="16rem">
-                                <Label id="idFileNameLabel" text="Nombre de fichero"/>
-                                <table:template>
-                                    <Text id="idFileNameText" text="{FileName}"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Destino -->
-                            <table:Column id="idDestinationColumn" width="10rem">
-                                <Label id="idDestinationLabel" text="Destino"/>
-                                <table:template>
-                                    <Input id="idDestinationInput" value="{Destination}" showValueHelp="true" valueHelpRequest=".onDestinationValueHelp" editable="{ path: 'Error', formatter: '.formatDestinationEditable' }" />
-                                </table:template>
-                            </table:Column>
-                            <!-- Descripción -->
-                            <table:Column id="idObjectDescColumn" width="9rem">
-                                    <Label id="idObjectDescLabel" text="Tipo de Objeto"/>
-                                <table:template>
-                                    <Text id="idObjectDescText" text="{ObjectDescription}" maxLines="2"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Tipo de Documento -->
-                            <!-- Key (ObjKey) -->
-                            <table:Column id="idObjKeyColumn" width="12rem">
-                                <Label text="Clave Objeto"/>
-                                <table:template>
-                                    <HBox alignItems="Center">
-                                        <!-- ObjKey as plain text (not clickable) -->
-                                        <Text id="idObjKeyText" text="{ObjKey}" />
-                                        <!-- Edit button opens the same dialog as before; visible only when allowed -->
-                    <Button id="idObjKeyEditButton"
-                        icon="sap-icon://edit"
-                        type="Transparent"
-                        tooltip="Editar"
-                        visible="{ parts: [{path: 'Error'}, {path: 'ObjKey'}, {path: 'Destination'}], formatter: '.formatEditVisible' }"
-                        press=".onObjKeyLinkPress"/>
-                                    </HBox>
-                                </table:template>
-                            </table:Column>
-                            <!-- Usuario -->
-                            <table:Column id="idUsernameColumn" width="8rem">
-                                <Label id="idUsernameLabel" text="{i18n>username}"/>
-                                <table:template>
-                                    <Text id="idUsernameText" text="{Username}"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Modificado -->
-                            <table:Column id="idModifiedAtColumn" width="9rem" sortProperty="ModifiedAt">
-                                <table:label>
-                                    <HBox id="idModifiedAtHeaderHBox">
-                                        <Text id="idModifiedAtHeaderText" text="{i18n>modifiedAt}"/>
-                                    </HBox>
-                                </table:label>
-                                <table:template>
-                                    <Text id="idModifiedAtText" text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Error (oculto) -->
-                            <table:Column id="idErrorColumn" width="5rem" visible="false">
-                                <Label id="idErrorLabel" text="{i18n>error}"/>
-                                <table:template>
-                                    <ObjectStatus id="idErrorObjectStatus" text="{path: 'Error', formatter: '.formatErrorText'}" state="{path: 'Error', formatter: '.formatErrorState'}"/>
-                                </table:template>
-                            </table:Column>
-                            <!-- Acciones -->
-                            <table:Column id="idActionsColumn" width="6rem">
-                                <Label id="idActionsLabel" text="{i18n>actions}"/>
-                                <table:template>
-                                    <HBox>
-                    <!-- Row-level visualize (eye) button: opens PDF for this row without selecting the table row -->
-                    <Button id="idRowVisualizeButton"
-                        icon="sap-icon://show"
-                        type="Transparent"
-                        tooltip="{i18n>visualize}"
-                        press=".onRowVisualizePress"/>
-                                        <Button id="idDownloadButton" icon="sap-icon://download" type="Transparent" tooltip="{i18n>download}" press=".onDownloadDocument"/>
-                                    </HBox>
-                                </table:template>
-                            </table:Column>
-                            <!-- Status -->
-                            <table:Column id="idStatusColumn" width="6rem">
-                                <Label id="idStatusLabel" text="Status"/>
-                                <table:template>
-                                    <!-- Ahora mapeamos el Status desde el campo Error -->
-                                    <Text id="idStatusText" text="{path: 'Error', formatter: '.formatStatusText'}"/>
-                                </table:template>
-                            </table:Column>
-                        </table:columns>
-                    </table:Table>
-                </content>
-            </Panel>
+            <table:Table
+                id="idDocumentsTable"
+                rows="{/PdfListSet}"
+                selectionMode="None"
+                enableColumnReordering="true"
+                enableCellFilter="true"
+                enableCustomFilter="true"
+                enableBusyIndicator="true"
+                width="100%"
+                alternateRowColors="true"
+                visibleRowCountMode="Auto"
+            >
+                <table:extension>
+                    <OverflowToolbar id="idDocumentsTableToolbar">
+                        <ToolbarSpacer id="idDocumentsTableToolbarSpacer" />
+                        <Button
+                            id="idExportButton"
+                            icon="sap-icon://excel-attachment"
+                            press="onExport"
+                        />
+                        <Button
+                            id="idRefreshButton"
+                            icon="sap-icon://refresh"
+                            tooltip="{i18n>refresh}"
+                            press=".onRefresh"
+                        />
+                    </OverflowToolbar>
+                </table:extension>
+
+                <table:columns>
+                    <table:Column
+                        id="idDocIdColumn"
+                        width="7rem"
+                        sortProperty="DocId"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idDocIdLabelText"
+                                text="{i18n>docId}"
+                            />
+                        </table:label>
+                        <table:template>
+                            <ObjectIdentifier
+                                id="idDocIdCellObjectIdentifier"
+                                title="{DocId}"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idFileNameColumn"
+                        width="16rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idFileNameLabelText"
+                                text="Nombre de fichero"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Text
+                                id="idFileNameCellText"
+                                text="{FileName}"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idDestinationColumn"
+                        width="10rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idDestinationLabelText"
+                                text="Destino"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Input
+                                id="idDestinationCellInput"
+                                value="{Destination}"
+                                showValueHelp="true"
+                                valueHelpRequest=".onDestinationValueHelp"
+                                editable="{ path: 'Error', formatter: '.formatDestinationEditable' }"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idObjectDescColumn"
+                        width="9rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idObjectDescLabelText"
+                                text="Tipo de Objeto"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Text
+                                id="idObjectDescCellText"
+                                text="{ObjectDescription}"
+                                maxLines="2"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idObjKeyColumn"
+                        width="12rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idObjKeyLabelText"
+                                text="Clave Objeto"
+                            />
+                        </table:label>
+                        <table:template>
+                            <HBox
+                                id="idObjKeyCellHBox"
+                                alignItems="Center"
+                            >
+                                <Text
+                                    id="idObjKeyCellText"
+                                    text="{ObjKey}"
+                                />
+                                <Button
+                                    id="idObjKeyCellEditButton"
+                                    icon="sap-icon://edit"
+                                    type="Transparent"
+                                    tooltip="Editar"
+                                    visible="{ parts: [{path: 'Error'}, {path: 'ObjKey'}, {path: 'Destination'}], formatter: '.formatEditVisible' }"
+                                    press=".onObjKeyLinkPress"
+                                />
+                            </HBox>
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idUsernameColumn"
+                        width="8rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idUsernameLabelText"
+                                text="{i18n>username}"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Text
+                                id="idUsernameCellText"
+                                text="{Username}"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idModifiedAtColumn"
+                        width="9rem"
+                        sortProperty="ModifiedAt"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idModifiedAtLabelText"
+                                text="{i18n>modifiedAt}"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Text
+                                id="idModifiedAtCellText"
+                                text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idErrorColumn"
+                        width="5rem"
+                        visible="false"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idErrorLabelText"
+                                text="{i18n>error}"
+                            />
+                        </table:label>
+                        <table:template>
+                            <ObjectStatus
+                                id="idErrorCellObjectStatus"
+                                text="{path: 'Error', formatter: '.formatErrorText'}"
+                                state="{path: 'Error', formatter: '.formatErrorState'}"
+                            />
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idActionsColumn"
+                        width="6rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idActionsLabelText"
+                                text="{i18n>actions}"
+                            />
+                        </table:label>
+                        <table:template>
+                            <HBox id="idActionsCellHBox">
+                                <Button
+                                    id="idRowVisualizeButton"
+                                    icon="sap-icon://show"
+                                    type="Transparent"
+                                    tooltip="{i18n>visualize}"
+                                    press=".onRowVisualizePress"
+                                />
+                                <Button
+                                    id="idDownloadButton"
+                                    icon="sap-icon://download"
+                                    type="Transparent"
+                                    tooltip="{i18n>download}"
+                                    press=".onDownloadDocument"
+                                />
+                            </HBox>
+                        </table:template>
+                    </table:Column>
+                    <table:Column
+                        id="idStatusColumn"
+                        width="6rem"
+                        resizable="true"
+                        autoResizable="true"
+                    >
+                        <table:label>
+                            <Text
+                                id="idStatusLabelText"
+                                text="Status"
+                            />
+                        </table:label>
+                        <table:template>
+                            <Text
+                                id="idStatusCellText"
+                                text="{path: 'Error', formatter: '.formatStatusText'}"
+                            />
+                        </table:template>
+                    </table:Column>
+                </table:columns>
+            </table:Table>
         </f:content>
-        <!-- Footer removed: per-row visualize button exists in the Actions column -->
     </f:DynamicPage>
 </mvc:View>

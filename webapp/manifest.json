@@ -20,9 +20,18 @@
         "uri": "/sap/opu/odata/sap/ZOD_CA_DOCUMENTS_SCAN_SRV/",
         "type": "OData",
         "settings": {
-          "annotations": [],
+          "annotations": [
+            "mainAnnotations"
+          ],
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
+        }
+      },
+      "mainAnnotations": {
+        "uri": "annotations/annotations.xml",
+        "type": "ODataAnnotation",
+        "settings": {
+          "localUri": "annotations/annotations.xml"
         }
       }
     }
@@ -51,7 +60,9 @@
         "sap.m": {},
         "sap.ui.core": {},
         "sap.ui.table": {},
-        "sap.ui.comp": {}
+        "sap.ui.comp": {},
+        "sap.ui.export": {},
+        "sap.ui.fl": {}
       }
     },
     "contentDensities": {
