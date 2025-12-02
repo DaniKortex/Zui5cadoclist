@@ -114,6 +114,96 @@ sap.ui.define([
             },
 
             /**
+             * SmartFilterBar initialized handler: attach valueHelpRequest for Destination filter
+             * Also attaches to the condition dialog inputs when it opens so the same value-help
+             * popover is shown anchored to the dialog's value input.
+             */
+            onSFBInitialized: function (oEvent) {
+                var that = this;
+                var oSFB = oEvent && oEvent.getSource ? oEvent.getSource() : this.byId("idSmartFilterBar");
+                if (!oSFB) { return; }
+
+                var fnAttachToFilterControl = function () {
+                    try {
+                        var oControl = null;
+                        if (typeof oSFB.getControlByKey === 'function') {
+                            oControl = oSFB.getControlByKey("Destination");
+                        }
+                        if (!oControl && typeof oSFB.getAllFilterItems === 'function') {
+                            var aItems = oSFB.getAllFilterItems();
+                            for (var i = 0; i < aItems.length; i++) {
+                                var oFI = aItems[i];
+                                if (oFI && typeof oFI.getName === 'function' && oFI.getName() === 'Destination') {
+                                    if (typeof oFI.getControl === 'function') { oControl = oFI.getControl(); }
+                                    break;
+                                }
+                            }
+                        }
+                        if (oControl && typeof oControl.attachValueHelpRequest === 'function') {
+                            try { oControl.detachValueHelpRequest(that.onDestinationValueHelp, that); } catch (e) { /* ignore */ }
+                            oControl.attachValueHelpRequest(that.onDestinationValueHelp, that);
+                        }
+                    } catch (e) { /* ignore */ }
+                };
+
+                var fnAttachToDialogInputs = function () {
+                    try {
+                        var oDialog = oSFB._oFilterDialog;
+                        if (!oDialog || typeof oDialog.attachAfterOpen !== 'function') return;
+                        // Ensure we attach only once
+                        if (oDialog._destinationAttached) return;
+                        oDialog._destinationAttached = true;
+
+                        oDialog.attachAfterOpen(function () {
+                            try {
+                                var fnTraverse = function (oCtrl) {
+                                    var aFound = [];
+                                    if (!oCtrl) return aFound;
+                                    var sName = oCtrl.getMetadata && oCtrl.getMetadata().getName && oCtrl.getMetadata().getName();
+                                    if (sName === 'sap.m.Input' || sName === 'sap.m.MultiInput') {
+                                        var oBind = oCtrl.getBindingInfo && oCtrl.getBindingInfo('value');
+                                        if (oBind && oBind.parts) {
+                                            for (var j = 0; j < oBind.parts.length; j++) {
+                                                var p = oBind.parts[j];
+                                                if (p && p.path && p.path.indexOf('Destination') !== -1) {
+                                                    aFound.push(oCtrl); break;
+                                                }
+                                            }
+                                        } else {
+                                            var sId = oCtrl.getId && oCtrl.getId();
+                                            if (sId && sId.toLowerCase().indexOf('destination') !== -1) aFound.push(oCtrl);
+                                        }
+                                    }
+                                    var m = oCtrl.getMetadata && oCtrl.getMetadata().getAllAggregations && oCtrl.getMetadata().getAllAggregations();
+                                    if (m) {
+                                        for (var agg in m) {
+                                            var oAgg = oCtrl.getAggregation && oCtrl.getAggregation(agg);
+                                            if (Array.isArray(oAgg)) {
+                                                for (var k = 0; k < oAgg.length; k++) { aFound = aFound.concat(fnTraverse(oAgg[k])); }
+                                            } else if (oAgg) { aFound = aFound.concat(fnTraverse(oAgg)); }
+                                        }
+                                    }
+                                    return aFound;
+                                };
+
+                                var aInputs = fnTraverse(oDialog);
+                                aInputs.forEach(function (oInput) {
+                                    try { oInput.detachValueHelpRequest(that.onDestinationValueHelp, that); } catch (e) { /* ignore */ }
+                                    if (typeof oInput.attachValueHelpRequest === 'function') {
+                                        oInput.attachValueHelpRequest(that.onDestinationValueHelp, that);
+                                    }
+                                });
+                            } catch (e) { /* ignore */ }
+                        });
+                    } catch (e) { /* ignore */ }
+                };
+
+                // Try to attach immediately and after a short delay to cover async creation
+                fnAttachToFilterControl();
+                setTimeout(function () { fnAttachToFilterControl(); fnAttachToDialogInputs(); }, 500);
+            },
+
+            /**
              * After rendering: adjust visible rows and sticky header offset.
              */
             onAfterRendering: function () {
@@ -894,12 +984,56 @@ sap.ui.define([
                     this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
                     return;
                 }
-                if (!oItem.Pdf) {
-                    this.showErrorMessage(this.getResourceBundle().getText("noPdfAvailable"));
+                var sDocId = oItem.DocId || oBindingContext.getProperty('DocId');
+                if (!sDocId) {
+                    this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
                     return;
                 }
-                // Reuse the existing PDF dialog opener
-                this._showPdfDialog(oItem);
+
+                var oModel = this.getModel();
+                var that = this;
+                // Show busy on view while reading the single entity
+                var oViewModel = this.getModel('viewModel');
+                if (oViewModel) { oViewModel.setProperty('/busy', true); }
+
+                // Build key and read single entity so Pdf field is filled by the service
+                var sKey;
+                try {
+                    sKey = oModel.createKey('/PdfListSet', { DocId: sDocId });
+                } catch (e) {
+                    // Fallback: manual key (assume string)
+                    sKey = "/PdfListSet('" + encodeURIComponent(sDocId) + "')";
+                }
+
+                oModel.read(sKey, {
+                    success: function (oData) {
+                        if (oViewModel) { oViewModel.setProperty('/busy', false); }
+                        if (oData && (oData.Pdf || oData.Pdf === 0)) {
+                            // Open the PDF dialog with the returned entity (contains Pdf)
+                            that._showPdfDialog(oData);
+                        } else {
+                            that.showErrorMessage(that.getResourceBundle().getText('noPdfAvailable'));
+                        }
+                    },
+                    error: function (oError) {
+                        if (oViewModel) { oViewModel.setProperty('/busy', false); }
+                        console.error('Error reading PdfListSet entity:', oError);
+                        that.showErrorMessage(that.getResourceBundle().getText('noPdfAvailable'));
+                    }
+                });
+            },
+
+            /**
+             * Navigate to detail edit page when DocId link is pressed
+             */
+            onDocIdPress: function (oEvent) {
+                var oSource = oEvent && oEvent.getSource && oEvent.getSource();
+                if (!oSource) { return; }
+                var oCtx = oSource.getBindingContext();
+                if (!oCtx) { this.showErrorMessage(this.getResourceBundle().getText('noDocumentSelected')); return; }
+                var sDocId = oCtx.getProperty('DocId') || (oCtx.getObject() && oCtx.getObject().DocId);
+                if (!sDocId) { this.showErrorMessage(this.getResourceBundle().getText('noDocumentSelected')); return; }
+                this.getRouter().navTo('RouteDocumentItemEdit', { DocId: sDocId });
             },
 
             /**

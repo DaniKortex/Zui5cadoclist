@@ -62,7 +62,9 @@
         "sap.ui.table": {},
         "sap.ui.comp": {},
         "sap.ui.export": {},
-        "sap.ui.fl": {}
+        "sap.ui.fl": {},
+        "sap.uxap": {},
+        "sap.ui.layout": {}
       }
     },
     "contentDensities": {
@@ -107,6 +109,14 @@
             "TargetDocumentList"
           ]
         }
+        ,
+        {
+          "name": "RouteDocumentItemEdit",
+          "pattern": "Document/{DocId}",
+          "target": [
+            "TargetDocumentItemEdit"
+          ]
+        }
       ],
       "targets": {
         "TargetDocumentList": {
@@ -115,6 +125,14 @@
           "clearControlAggregation": false,
           "viewId": "DocumentList",
           "viewName": "DocumentList"
+        }
+        ,
+        "TargetDocumentItemEdit": {
+          "viewType": "XML",
+          "transition": "slide",
+          "clearControlAggregation": false,
+          "viewId": "DocumentItemEdit",
+          "viewName": "DocumentItemEdit"
         }
       }
     },

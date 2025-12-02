@@ -1,0 +1,76 @@
+<mvc:View controllerName="zui5cadoclist.controller.DocumentItemEdit"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:uxap="sap.uxap"
+    xmlns:layout="sap.ui.layout.form">
+    <uxap:ObjectPageLayout id="documentItemObjectPage">
+        <uxap:headerTitle>
+            <uxap:ObjectPageHeader id="idObjectPageHeader" title="{item>/FileName}" objectTitle="{item>/DocId}" />
+        </uxap:headerTitle>
+        <uxap:headerContent>
+            <Toolbar>
+                <Button icon="sap-icon://nav-back" press="onNavBack" tooltip="Volver" />
+                <ToolbarSpacer />
+                <Button text="Cancelar" type="Transparent" press="onCancel" />
+                <Button text="Guardar" type="Emphasized" press="onSave" />
+            </Toolbar>
+        </uxap:headerContent>
+
+        <uxap:sections>
+            <uxap:ObjectPageSection id="sectionFixed" title="Datos">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <layout:SimpleForm editable="false" layout="ResponsiveGridLayout">
+                            <Label text="ID Documento" />
+                            <Text text="{item>/DocId}" />
+
+                            <Label text="Nombre fichero" />
+                            <Text text="{item>/FileName}" />
+
+                            <Label text="Usuario" />
+                            <Text text="{item>/Username}" />
+
+                            <Label text="Fecha modificación" />
+                            <Text text="{path: 'item>/ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }" />
+                        </layout:SimpleForm>
+                        <Toolbar>
+                            <ToolbarSpacer />
+                            <Button text="Cancelar" type="Transparent" press="onCancel" />
+                            <Button text="Guardar" type="Emphasized" press="onSave" />
+                        </Toolbar>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+
+            <uxap:ObjectPageSection id="sectionEditable" title="Editar">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <layout:SimpleForm editable="true" layout="ResponsiveGridLayout">
+                            <Label text="Tipo de Objeto" />
+                            <Input id="idItemObjectTypeInput" value="{item>/ObjectDescription}" showValueHelp="true" valueHelpRequest="onObjectTypeValueHelp" />
+
+                            <Label text="Destino" />
+                            <Input id="idItemDestinationInput" value="{item>/Destination}" showValueHelp="true" valueHelpRequest="onDestinationValueHelp" editable="{ path: 'item>/Error', formatter: '.formatDestinationEditable' }" />
+
+                            <Label text="Clave Objeto" />
+                            <HBox alignItems="Center">
+                                <Text text="{item>/ObjKey}" />
+                                <Button icon="sap-icon://edit" type="Transparent" tooltip="Editar clave" press="onObjKeyLinkPress" visible="{ parts: [{path: 'item>/Error'}, {path: 'item>/ObjKey'}, {path: 'item>/Destination'}], formatter: '.formatEditVisible' }" />
+                            </HBox>
+                        </layout:SimpleForm>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+
+            <uxap:ObjectPageSection id="sectionPdf" title="Previsualización">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <VBox>
+                            <core:HTML id="idPdfHtml" xmlns:core="sap.ui.core" content="&lt;div&gt;Cargando previsualización...&lt;/div&gt;" />
+                        </VBox>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+        </uxap:sections>
+    </uxap:ObjectPageLayout>
+</mvc:View>

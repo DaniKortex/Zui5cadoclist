@@ -56,44 +56,7 @@
             <PropertyPath>Error</PropertyPath>
           </Collection>
         </Annotation>
-        <Annotation Term="UI.FieldGroup" Qualifier="Main">
-          <Record Type="UI.FieldGroupType">
-            <PropertyValue Property="Data">
-              <Collection>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="DocId" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="FileName" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="Destination" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="TypeDoc" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="ObjKey" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="ObjectDescription" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="Username" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="ModifiedAt" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="ErrorMessage" />
-                </Record>
-                <Record Type="UI.DataField">
-                  <PropertyValue Property="Value" Path="Status" />
-                </Record>
-              </Collection>
-            </PropertyValue>
-          </Record>
-        </Annotation>
+       
         <Annotation Term="UI.Identification">
           <Collection>
             <Record Type="UI.DataField">

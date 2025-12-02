@@ -75,10 +75,7 @@
                             />
                         </table:label>
                         <table:template>
-                            <ObjectIdentifier
-                                id="idDocIdCellObjectIdentifier"
-                                title="{DocId}"
-                            />
+                            <Link text="{DocId}" press="onDocIdPress" />
                         </table:template>
                     </table:Column>
                     <table:Column
@@ -113,13 +110,7 @@
                             />
                         </table:label>
                         <table:template>
-                            <Input
-                                id="idDestinationCellInput"
-                                value="{Destination}"
-                                showValueHelp="true"
-                                valueHelpRequest=".onDestinationValueHelp"
-                                editable="{ path: 'Error', formatter: '.formatDestinationEditable' }"
-                            />
+                            <Text id="idDestinationCellText" text="{ path: 'Destination', formatter: '.formatDestinationText' }" />
                         </table:template>
                     </table:Column>
                     <table:Column
@@ -155,23 +146,7 @@
                             />
                         </table:label>
                         <table:template>
-                            <HBox
-                                id="idObjKeyCellHBox"
-                                alignItems="Center"
-                            >
-                                <Text
-                                    id="idObjKeyCellText"
-                                    text="{ObjKey}"
-                                />
-                                <Button
-                                    id="idObjKeyCellEditButton"
-                                    icon="sap-icon://edit"
-                                    type="Transparent"
-                                    tooltip="Editar"
-                                    visible="{ parts: [{path: 'Error'}, {path: 'ObjKey'}, {path: 'Destination'}], formatter: '.formatEditVisible' }"
-                                    press=".onObjKeyLinkPress"
-                                />
-                            </HBox>
+                            <Text id="idObjKeyCellText" text="{ObjKey}" />
                         </table:template>
                     </table:Column>
                     <table:Column
