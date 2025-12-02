@@ -938,6 +938,7 @@ sap.ui.define([
                         try {
                             var blob = new Blob([ab], { type: 'application/pdf' });
                             sBlobUrl = URL.createObjectURL(blob);
+                            jQuery.sap.addUrlWhitelist("blob"); // register blob url as whitelist
                         } catch (e) {
                             console.error('Error creando Blob del PDF:', e);
                         }
@@ -946,17 +947,9 @@ sap.ui.define([
                     var oPdfModel = new JSONModel({
                         title: oSelectedItem.FileName,
                         docId: oSelectedItem.DocId,
-                        pdfData: '',
                         pdfUrl: sBlobUrl,
-                        hasBlob: !!sBlobUrl
                     });
                     oDialog.setModel(oPdfModel, 'pdf');
-
-                    // Ajustar explícitamente la fuente del visor (sin fallback HTML)
-                    var oPdfViewer = oDialog.byId && oDialog.byId('idPdfViewer');
-                    if (oPdfViewer && typeof oPdfViewer.setSource === 'function' && sBlobUrl) {
-                        oPdfViewer.setSource(sBlobUrl);
-                    }
                     oDialog.open();
                 };
 

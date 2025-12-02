@@ -32,7 +32,7 @@
                 </HBox>
                 <PDFViewer
                     id="idPdfViewer"
-                    source="{= ${pdf>/pdfUrl} ? ${pdf>/pdfUrl} : ${pdf>/pdfData} }"
+                    source="{pdf>/pdfUrl}"
                     showDownloadButton="false"
                     isTrustedSource="true"
                     width="100%"
