@@ -1,33 +1,57 @@
 <core:FragmentDefinition
     xmlns="sap.m"
-    xmlns:core="sap.ui.core">
-    <Dialog id="idPdfViewerDialog" 
-            title="{pdf>/title}"
-            contentWidth="90%"
-            contentHeight="90%"
-            resizable="true"
-            draggable="true">
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        id="idPdfViewerDialog"
+        title="{pdf>/title}"
+        contentWidth="100%"
+        contentHeight="100%"
+        resizable="true"
+        draggable="true"
+    >
         <content>
-            <VBox id="idPdfViewerVBox" class="sapUiMediumMargin" renderType="Div">
-                <HBox id="idPdfInfoHBox" class="sapUiSmallMarginBottom">
-                    <Label id="idPdfDocIdLabel" text="{i18n>docId}: {pdf>/docId}" class="sapUiSmallMarginEnd"/>
-                    <Label id="idPdfFileNameLabel" text="{i18n>fileName}: {pdf>/title}"/>
+            <VBox
+                id="idPdfViewerVBox"
+                class="sapUiMediumMargin"
+                renderType="Div"
+            >
+                <HBox
+                    id="idPdfInfoHBox"
+                    class="sapUiSmallMarginBottom"
+                >
+                    <Label
+                        id="idPdfDocIdLabel"
+                        text="{i18n>docId}: {pdf>/docId}"
+                        class="sapUiSmallMarginEnd"
+                    />
+                    <Label
+                        id="idPdfFileNameLabel"
+                        text="{i18n>fileName}: {pdf>/title}"
+                    />
                 </HBox>
-                <PDFViewer id="idPdfViewer"
-                           source="{pdf>/pdfData}"
-                           showDownloadButton="false"
-                           width="100%"
-                           height="600px"/>
+                <PDFViewer
+                    id="idPdfViewer"
+                    source="{= ${pdf>/pdfUrl} ? ${pdf>/pdfUrl} : ${pdf>/pdfData} }"
+                    showDownloadButton="false"
+                    isTrustedSource="true"
+                    width="100%"
+                    height="600px"
+                />
             </VBox>
         </content>
         <buttons>
-            <Button id="idDownloadPdfButton" 
-                   text="{i18n>download}" 
-                   icon="sap-icon://download"
-                   press=".onDownloadPdfFromDialog"/>
-            <Button id="idClosePdfButton" 
-                   text="{i18n>close}" 
-                   press=".onClosePdfDialog"/>
+            <Button
+                id="idDownloadPdfButton"
+                text="{i18n>download}"
+                icon="sap-icon://download"
+                press=".onDownloadPdfFromDialog"
+            />
+            <Button
+                id="idClosePdfButton"
+                text="{i18n>close}"
+                press=".onClosePdfDialog"
+            />
         </buttons>
     </Dialog>
 </core:FragmentDefinition>

@@ -910,13 +910,53 @@ sap.ui.define([
             _showPdfDialog: function (oSelectedItem) {
                 var that = this;
                 var fnOpen = function (oDialog) {
-                    // Set the PDF data to the dialog model
+                    // Construye un Blob URL directamente desde binario (ArrayBuffer/Uint8Array/array de números)
+                    var toArrayBuffer = function (data) {
+                        if (!data) { return null; }
+                        if (data instanceof ArrayBuffer) { return data; }
+                        if (ArrayBuffer.isView && ArrayBuffer.isView(data)) { return data.buffer; }
+                        if (Array.isArray(data)) { return new Uint8Array(data).buffer; }
+                        // Si llega como string base64 por compatibilidad, decodificar
+                        if (typeof data === 'string') {
+                            try {
+                                var binStr = atob(data.replace(/\s/g, '').replace(/-/g, '+'));
+                                var len = binStr.length;
+                                var bytes = new Uint8Array(len);
+                                for (var i = 0; i < len; i++) { bytes[i] = binStr.charCodeAt(i); }
+                                return bytes.buffer;
+                            } catch (e) {
+                                console.warn('No se pudo decodificar la cadena base64 proporcionada.');
+                                return null;
+                            }
+                        }
+                        return null;
+                    };
+
+                    var ab = toArrayBuffer(oSelectedItem.Pdf);
+                    var sBlobUrl = '';
+                    if (ab) {
+                        try {
+                            var blob = new Blob([ab], { type: 'application/pdf' });
+                            sBlobUrl = URL.createObjectURL(blob);
+                        } catch (e) {
+                            console.error('Error creando Blob del PDF:', e);
+                        }
+                    }
+
                     var oPdfModel = new JSONModel({
                         title: oSelectedItem.FileName,
                         docId: oSelectedItem.DocId,
-                        pdfData: "data:application/pdf;base64," + oSelectedItem.Pdf
+                        pdfData: '',
+                        pdfUrl: sBlobUrl,
+                        hasBlob: !!sBlobUrl
                     });
-                    oDialog.setModel(oPdfModel, "pdf");
+                    oDialog.setModel(oPdfModel, 'pdf');
+
+                    // Ajustar explícitamente la fuente del visor (sin fallback HTML)
+                    var oPdfViewer = oDialog.byId && oDialog.byId('idPdfViewer');
+                    if (oPdfViewer && typeof oPdfViewer.setSource === 'function' && sBlobUrl) {
+                        oPdfViewer.setSource(sBlobUrl);
+                    }
                     oDialog.open();
                 };
 
@@ -941,6 +981,16 @@ sap.ui.define([
              */
             onClosePdfDialog: function () {
                 if (this._pdfDialog) {
+                    // Revoke blob URL to free memory
+                    try {
+                        var oPdfModel = this._pdfDialog.getModel("pdf");
+                        if (oPdfModel) {
+                            var sUrl = oPdfModel.getProperty("/pdfUrl");
+                            if (sUrl && sUrl.indexOf('blob:') === 0 && URL && URL.revokeObjectURL) {
+                                URL.revokeObjectURL(sUrl);
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
                     this._pdfDialog.close();
                 }
             },
@@ -953,13 +1003,14 @@ sap.ui.define([
                 var oPdfModel = this._pdfDialog.getModel("pdf");
                 var oPdfData = oPdfModel.getData();
 
-                if (oPdfData && oPdfData.pdfData) {
-                    // Create a download link
+                if (oPdfData && (oPdfData.pdfUrl || oPdfData.pdfData)) {
+                    var href = oPdfData.pdfUrl || oPdfData.pdfData;
                     var link = document.createElement('a');
-                    link.href = oPdfData.pdfData;
+                    link.href = href;
                     link.download = oPdfData.title || 'document.pdf';
+                    document.body.appendChild(link);
                     link.click();
-
+                    document.body.removeChild(link);
                     this.showMessage(this.getResourceBundle().getText("downloadStarted", [oPdfData.docId]));
                 }
             },
