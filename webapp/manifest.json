@@ -108,13 +108,19 @@
           "target": [
             "TargetDocumentList"
           ]
-        }
-        ,
+        },
         {
           "name": "RouteDocumentItemEdit",
           "pattern": "Document/{DocId}",
           "target": [
             "TargetDocumentItemEdit"
+          ]
+        },
+        {
+          "name": "AddAttachments",
+          "pattern": "AddAttachments",
+          "target": [
+            "TargetAddAttachments"
           ]
         }
       ],
@@ -125,14 +131,20 @@
           "clearControlAggregation": false,
           "viewId": "DocumentList",
           "viewName": "DocumentList"
-        }
-        ,
+        },
         "TargetDocumentItemEdit": {
           "viewType": "XML",
           "transition": "slide",
           "clearControlAggregation": false,
           "viewId": "DocumentItemEdit",
           "viewName": "DocumentItemEdit"
+        },
+        "TargetAddAttachments": {
+          "viewType": "XML",
+          "transition": "slide",
+          "clearControlAggregation": false,
+          "viewId": "AddAttachments",
+          "viewName": "AddAttachments"
         }
       }
     },

@@ -82,6 +82,19 @@
                 <Property Name="Status" Type="Edm.String" sap:unicode="false" sap:label="Status" sap:creatable="false"/>
                 <Property Name="Pdf" Type="Edm.Binary" sap:unicode="false" sap:label="Pdf" sap:creatable="false"/>
             </EntityType>
+            <EntityType Name="AddAtachments" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="Filename" Type="Edm.String" sap:unicode="false" sap:label="Filename" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="MimeType" Type="Edm.String" sap:unicode="false" sap:label="Mimetype" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="Value" Type="Edm.String" sap:unicode="false" sap:label="Fichero"/>
+                <Property Name="ID" Type="Edm.String" Nullable="false" MaxLength="70" sap:unicode="false" sap:label="ID instancia" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="FileSize" Type="Edm.Int32" sap:unicode="false" sap:label="Tamaño" sap:creatable="false" sap:updatable="false"/>
+                <Property Name="TypeDoc" Type="Edm.String" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false"/>
+                <Property Name="TypeObj" Type="Edm.String" sap:unicode="false" sap:label="Tipo objeto" sap:creatable="false"/>
+                <Property Name="Destination" Type="Edm.String" sap:unicode="false" sap:label="Destino" sap:creatable="false"/>
+            </EntityType>
             <Association Name="AssocDestinationRequiredFields" sap:content-version="1">
                 <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.DestinationAssign" Multiplicity="0..1" Role="FromRole_AssocDestinationRequiredFields"/>
                 <End Type="ZOD_CA_DOCUMENTS_SCAN_SRV.RequiredFields" Multiplicity="*" Role="ToRole_AssocDestinationRequiredFields"/>
@@ -126,6 +139,7 @@
                 <EntitySet Name="ObjectTypeSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.ObjectType" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
                 <EntitySet Name="ScanDocsItemSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsItem" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:searchable="true" sap:content-version="1"/>
                 <EntitySet Name="PdfListSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+                <EntitySet Name="AddAtachmentsSet" EntityType="ZOD_CA_DOCUMENTS_SCAN_SRV.AddAtachments" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
                 <AssociationSet Name="ScanDocsListToItemSet" Association="ZOD_CA_DOCUMENTS_SCAN_SRV.ScanDocsListToItem" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
                     <End EntitySet="ScanDocsListSet" Role="FromRole_ScanDocsListToItem"/>
                     <End EntitySet="ScanDocsItemSet" Role="ToRole_ScanDocsListToItem"/>

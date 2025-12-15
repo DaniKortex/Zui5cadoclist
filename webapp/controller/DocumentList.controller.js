@@ -297,40 +297,6 @@ sap.ui.define([
                 return aCols;
             },
 
-            onExport: function () {
-                var oTable = this.byId("idDocumentsTable");
-                var oRowBinding = oTable && oTable.getBinding("rows");
-                var aCols = this.createColumnConfig();
-                var aData = [];
-                if (oRowBinding) {
-                    var oModel = oRowBinding.getModel && oRowBinding.getModel();
-                    if (Array.isArray(oRowBinding.aKeys) && oRowBinding.aKeys.length > 0 && oModel && typeof oModel.getProperty === "function") {
-                        var aExportProps = aCols.map(function (c) { return c.property; }).filter(function (p) { return !!p; });
-                        oRowBinding.aKeys.forEach(function (sKey) {
-                            if (!sKey) { return; }
-                            var oObj = oModel.getProperty("/" + sKey);
-                            if (!oObj) { return; }
-                            var oExport = {};
-                            aExportProps.forEach(function (prop) {
-                                if (prop && Object.prototype.hasOwnProperty.call(oObj, prop)) {
-                                    oExport[prop] = oObj[prop];
-                                }
-                            });
-                            aData.push(oExport);
-                        });
-                    }
-                }
-                var oBundle = (this.getOwnerComponent().getModel("i18n").getResourceBundle()) || null;
-                var sExportFileName = oBundle ? oBundle.getText("exportFileName") : "Table export.xlsx";
-                var oSettings = { workbook: { columns: aCols, hierarchyLevel: "Level" }, dataSource: aData, fileName: sExportFileName, worker: false };
-                if (sap.ui.require) {
-                    sap.ui.require(['sap/ui/export/Spreadsheet'], function (Spreadsheet) {
-                        var oSheet = new Spreadsheet(oSettings);
-                        oSheet.build().finally(function () { oSheet.destroy(); });
-                    });
-                }
-            },
-
             /**
              * Test data connection
              * @private
@@ -406,6 +372,15 @@ sap.ui.define([
                     oViewModel.setProperty("/sortOrderModifiedAt", undefined);
                 }
                 this._testDataConnection();
+            },
+
+            onAddAttachments: function () {
+                try {
+                    var oRouter = this.getRouter();
+                    if (oRouter && typeof oRouter.navTo === 'function') {
+                        oRouter.navTo("AddAttachments");
+                    }
+                } catch (e) { /* ignore */ }
             },
 
             /**
@@ -1379,20 +1354,14 @@ sap.ui.define([
             /**
              * Handle row selection change for sap.ui.table.Table
              */
-            onRowSelectionChange: function (oEvent) {
+            onRowActionPress: function (oEvent) {
                 var oTable = this.byId("idDocumentsTable");
-                var aSel = oTable.getSelectedIndices();
-                var oViewModel = this.getModel("viewModel");
-                if (aSel && aSel.length > 0) {
-                    var oCtx = oTable.getContextByIndex(aSel[0]);
-                    if (oCtx) {
-                        oViewModel.setProperty("/hasSelection", true);
-                        oViewModel.setProperty("/selectedItem", oCtx.getObject());
-                        return;
-                    }
-                }
-                oViewModel.setProperty("/hasSelection", false);
-                oViewModel.setProperty("/selectedItem", null);
+                var oItem = oEvent && oEvent.getParameter && oEvent.getParameter("row") ? oEvent.getParameter("row") : null;
+                var oCtx = oItem && oItem.getBindingContext ? oItem.getBindingContext() : null;
+                if (!oCtx) { this.showErrorMessage(this.getResourceBundle().getText('noDocumentSelected')); return; }
+                var oObj = oCtx.getObject();
+                var sDocId = oObj && oObj.DocId;
+                if (sDocId) { this.getRouter().navTo('RouteDocumentItemEdit', { DocId: sDocId }); }
             }
         });
     });

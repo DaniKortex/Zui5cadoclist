@@ -1,0 +1,121 @@
+<mvc:View
+    controllerName="zui5cadoclist.controller.AddAttachments"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:uxap="sap.uxap"
+    xmlns:layout="sap.ui.layout.form"
+    xmlns:unified="sap.ui.unified"
+    xmlns:upload="sap.m.upload"
+>
+    <uxap:ObjectPageLayout id="addAttachmentsObjectPage">
+        <uxap:headerTitle>
+            <uxap:ObjectPageHeader
+                id="idAddAttachmentsHeader"
+                objectTitle="Añadir Documentos"
+            >
+                <uxap:actions>
+                    <Button
+                        id="idAddSaveBtn"
+                        text="Guardar"
+                        type="Emphasized"
+                        press="onSave"
+                    />
+                </uxap:actions>
+            </uxap:ObjectPageHeader>
+        </uxap:headerTitle>
+
+        <uxap:sections>
+            <uxap:ObjectPageSection
+                id="sectionTop"
+                title="Datos"
+            >
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection id="idTopSubSection">
+                        <layout:SimpleForm
+                            id="idTopForm"
+                            editable="true"
+                            layout="ResponsiveGridLayout"
+                        >
+                            <Label
+                                id="idDestLabel"
+                                text="Destino"
+                            />
+                            <Input
+                                id="idAddDestInput"
+                                value="{item>/Destination}"
+                                showValueHelp="true"
+                                width="10rem"
+                                valueHelpRequest="onDestinationValueHelp"
+                            />
+
+                            <Label
+                                id="idObjKeyLabel"
+                                text="Clave Objeto"
+                            />
+                            <HBox
+                                id="idObjKeyHBox"
+                                alignItems="Center"
+                            >
+                                <Text
+                                    id="idObjKeyText"
+                                    text="{item>/ObjKey}"
+                                    width="30rem"
+                                />
+                                <Button
+                                    id="idEditObjKeyButton"
+                                    icon="sap-icon://edit"
+                                    type="Transparent"
+                                    tooltip="Editar clave"
+                                    press="onObjKeyLinkPress"
+                                />
+                            </HBox>
+                        </layout:SimpleForm>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+
+            <uxap:ObjectPageSection
+                id="sectionContent"
+                title="Adjuntar"
+            >
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection id="idContentSubSection">
+                        <VBox
+                            id="idAttachVBox"
+                            width="100%"
+                        >
+                            <Text
+                                id="idAttachInfoText"
+                                text="Selecciona PDFs para adjuntar:"
+                            />
+                            <upload:UploadSet
+                                id="idUploadSet"
+                                instantUpload="true"
+                                showIcons="true"
+                                uploadEnabled="true"
+                                mode="SingleSelect"
+                                fileTypes="pdf"
+                                mediaTypes="application/pdf"
+                                uploadUrl="/upload"
+                                afterItemAdded="onUploadSetAfterItemAdded"
+                            >
+                                <upload:toolbar>
+                                    <OverflowToolbar id="idUSHeaderToolbar">
+                                        <ToolbarSpacer id="idUSToolbarSpacer" />
+                                        <Button
+                                            id="idUSAssignTypeBtn"
+                                            text="Asignar Tipo"
+                                            type="Transparent"
+                                            press="onAssignTypeToSelected"
+                                        />
+                                    </OverflowToolbar>
+                                </upload:toolbar>
+                            </upload:UploadSet>
+                        </VBox>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+        </uxap:sections>
+    </uxap:ObjectPageLayout>
+</mvc:View>

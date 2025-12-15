@@ -1,13 +1,30 @@
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-  <Dialog id="idDynamicEditDialog" title="Editar campos requeridos" draggable="true" resizable="true" contentWidth="400px" contentHeight="auto">
-    <VBox id="idDynamicEditVBox">
-      <!-- Los campos se generarán dinámicamente desde el controlador -->
-    </VBox>
-    <beginButton>
-      <Button text="Validar" type="Emphasized" press=".onDynamicEditDialogSave"/>
-    </beginButton>
-    <endButton>
-      <Button text="Cancelar" press=".onDynamicEditDialogCancel"/>
-    </endButton>
-  </Dialog>
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        id="idDynamicEditDialog"
+        title="Editar campos requeridos"
+        draggable="true"
+        resizable="true"
+        contentWidth="400px"
+        contentHeight="auto"
+    >
+        <VBox id="idDynamicEditVBox">
+            <!-- Los campos se generarán dinámicamente desde el controlador -->
+        </VBox>
+        <beginButton>
+            <Button
+                text="Validar"
+                type="Emphasized"
+                press=".onDynamicEditDialogSave"
+            />
+        </beginButton>
+        <endButton>
+            <Button
+                text="Cancelar"
+                press=".onDynamicEditDialogCancel"
+            />
+        </endButton>
+    </Dialog>
 </core:FragmentDefinition>

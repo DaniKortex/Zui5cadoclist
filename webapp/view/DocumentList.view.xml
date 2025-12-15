@@ -13,7 +13,10 @@
         fitContent="false"
     >
         <f:header>
-            <f:DynamicPageHeader pinnable="false">
+            <f:DynamicPageHeader
+                id="idDocumentListDynamicPageHeader"
+                pinnable="false"
+            >
                 <smartFilterBar:SmartFilterBar
                     id="idSmartFilterBar"
                     entitySet="PdfListSet"
@@ -42,15 +45,31 @@
                 width="100%"
                 alternateRowColors="true"
                 visibleRowCountMode="Auto"
+                rowActionCount="1"
             >
+                <table:rowActionTemplate>
+                    <table:RowAction id="idDocumentsTableRowAction">
+                        <table:items>
+                            <table:RowActionItem
+                                id="idDocumentsTableRowActionItemNavigate"
+                                icon="sap-icon://navigation-right-arrow"
+                                text="Editar"
+                                press=".onRowActionPress"
+                            />
+                        </table:items>
+                    </table:RowAction>
+                </table:rowActionTemplate>
                 <table:extension>
                     <OverflowToolbar id="idDocumentsTableToolbar">
                         <ToolbarSpacer id="idDocumentsTableToolbarSpacer" />
                         <Button
-                            id="idExportButton"
-                            icon="sap-icon://excel-attachment"
-                            press="onExport"
+                            id="idAddAttachmentsButton"
+                            text="Añadir Documentos"
+                            icon="sap-icon://add-document"
+                            type="Emphasized"
+                            press=".onAddAttachments"
                         />
+
                         <Button
                             id="idRefreshButton"
                             icon="sap-icon://refresh"
@@ -75,7 +94,10 @@
                             />
                         </table:label>
                         <table:template>
-                            <Link text="{DocId}" press="onDocIdPress" />
+                            <Text
+                                id="idDocIdCellText"
+                                text="{DocId}"
+                            />
                         </table:template>
                     </table:Column>
                     <table:Column
@@ -110,7 +132,10 @@
                             />
                         </table:label>
                         <table:template>
-                            <Text id="idDestinationCellText" text="{ path: 'Destination', formatter: '.formatDestinationText' }" />
+                            <Text
+                                id="idDestinationCellText"
+                                text="{ path: 'Destination', formatter: '.formatDestinationText' }"
+                            />
                         </table:template>
                     </table:Column>
                     <table:Column
@@ -146,7 +171,10 @@
                             />
                         </table:label>
                         <table:template>
-                            <Text id="idObjKeyCellText" text="{ObjKey}" />
+                            <Text
+                                id="idObjKeyCellText"
+                                text="{ObjKey}"
+                            />
                         </table:template>
                     </table:Column>
                     <table:Column
