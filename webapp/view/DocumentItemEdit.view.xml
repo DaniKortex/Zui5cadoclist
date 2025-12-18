@@ -56,6 +56,7 @@
                         text="Guardar"
                         type="Emphasized"
                         press="onSave"
+                        visible="{ path: 'item>/Error', formatter: '.formatDestinationEditable' }"
                     />
                 </uxap:actions>
             </uxap:ObjectPageDynamicHeaderTitle>
@@ -108,6 +109,7 @@
                     showValueHelp="true"
                     width="10rem"
                     valueHelpRequest="onObjectTypeValueHelp"
+                    editable="{ path: 'item>/Error', formatter: '.formatDestinationEditable' }"
                 />
             </layout:SimpleForm>
         </uxap:headerContent>

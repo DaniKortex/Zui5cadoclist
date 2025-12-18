@@ -19,17 +19,14 @@ sap.ui.define([
         },
 
         /**
-         * Determine if Error value allows editing (contains 'P' or 'E')
+         * Determine if Error value allows editing: non-empty string → editable
          * @private
          */
         _errorAllowsEdit: function (vError) {
             if (vError === null || vError === undefined) { return false; }
             if (typeof vError !== 'string') { return false; }
-            var s = vError.trim().toUpperCase();
-            if (s === '') { return false; }
-            if (s.indexOf('P') !== -1) { return true; }
-            if (s.indexOf('E') !== -1) { return true; }
-            return false;
+            var s = vError.trim();
+            return s !== '';
         },
 
         /**

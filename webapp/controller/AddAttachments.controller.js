@@ -7,6 +7,24 @@ sap.ui.define([
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.AddAttachments", {
+        _fileToBase64: function (oFile) {
+            return new Promise(function (resolve, reject) {
+                if (!oFile) { resolve(null); return; }
+                try {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var s = (e && e.target && e.target.result) ? e.target.result : "";
+                        var idx = s.indexOf(",");
+                        var base64 = idx >= 0 ? s.substring(idx + 1) : s;
+                        resolve(base64);
+                    };
+                    reader.onerror = function (err) { reject(err); };
+                    reader.readAsDataURL(oFile);
+                } catch (ex) {
+                    reject(ex);
+                }
+            });
+        },
         onInit: function () {
             var oModel = new JSONModel({ Destination: "", ObjKey: "" });
             this.getView().setModel(oModel, "item");
@@ -21,13 +39,58 @@ sap.ui.define([
             var aItems = oUploadSet ? oUploadSet.getItems() : [];
             if (!aItems || !aItems.length) { this.showMessage("No hay documentos para adjuntar"); return; }
             var oItemHdr = this.getView().getModel("item").getData() || {};
+            // Validate required header fields: Destination and ObjKey
+            var sDest = (oItemHdr.Destination || "").trim();
+            var sObjKey = (oItemHdr.ObjKey || "").trim();
+            if (!sDest || !sObjKey) {
+                this.showErrorMessage("Debe indicar Destino y Clave del Objeto (ObjKey)");
+                return;
+            }
+            // Validate that all files have a Tipo de Objeto assigned
+            var aMissingTypes = [];
+            aItems.forEach(function (oUSItem) {
+                var sTypeObj = "";
+                var aAttrs = oUSItem.getAttributes ? oUSItem.getAttributes() : [];
+                aAttrs.forEach(function (oAttr) {
+                    var sTitle = oAttr.getTitle && oAttr.getTitle();
+                    if (sTitle === "Tipo de Objeto") { sTypeObj = oAttr.getText(); }
+                });
+                if (!sTypeObj || String(sTypeObj).trim() === "") {
+                    var sName = oUSItem.getFileName ? oUSItem.getFileName() : "(sin nombre)";
+                    aMissingTypes.push(sName);
+                }
+            });
+            if (aMissingTypes.length) {
+                this.showErrorMessage("Asigna un tipo a todos los ficheros. Sin tipo: " + aMissingTypes.join(", "));
+                return;
+            }
             var oModel = this.getOwnerComponent().getModel();
             var that = this;
             var iOk = 0, iErr = 0, iPending = aItems.length;
             var fnDone = function () {
-                if (iErr === 0) { that.showSuccessMessage("Documentos adjuntados"); }
-                else { MessageBox.error("Se adjuntaron " + iOk + " documentos. Errores: " + iErr); }
-                var oRouter = that.getRouter(); if (oRouter) { oRouter.navTo("DocumentList"); }
+                if (iErr === 0) {
+                    that.showSuccessMessage("Documentos adjuntados");
+                    // Clear UI state: remove files and reset header fields
+                    try {
+                        var oUS = that.byId("idUploadSet");
+                        if (oUS && oUS.removeAllItems) { oUS.removeAllItems(); }
+                    } catch (e) { /* ignore */ }
+                    try {
+                        var oItemModel = that.getView().getModel("item");
+                        if (oItemModel) { oItemModel.setData({ Destination: "", ObjKey: "" }); }
+                    } catch (e2) { /* ignore */ }
+                    // Navigate back if possible, else to list
+                    try {
+                        var oHistory = sap.ui.core.routing.History.getInstance();
+                        var sPrev = oHistory && oHistory.getPreviousHash && oHistory.getPreviousHash();
+                        if (sPrev !== undefined) { window.history.go(-1); }
+                        else { that.getRouter().navTo("RouteDocumentList"); }
+                    } catch (e3) {
+                        that.getRouter().navTo("RouteDocumentList");
+                    }
+                } else {
+                    MessageBox.error("Se adjuntaron " + iOk + " documentos. Errores: " + iErr);
+                }
             };
             aItems.forEach(function (oUSItem) {
                 var oFile = oUSItem.getFileObject && oUSItem.getFileObject();
@@ -41,19 +104,23 @@ sap.ui.define([
                     if (sTitle === "Tipo de Objeto") { sTypeObj = oAttr.getText(); }
                     if (sTitle === "Descripción") { sObjDesc = oAttr.getText(); }
                 });
-                var oPayload = {
-                    Destination: oItemHdr.Destination || "",
-                    ObjKey: oItemHdr.ObjKey || "",
-                    FileName: oUSItem.getFileName ? oUSItem.getFileName() : "",
-                    FileSize: iSize,
-                    TypeObj: sTypeObj,
-                    ObjectDescription: sObjDesc,
-                    MediaType: sMedia,
-                    Url: oUSItem.getUrl ? oUSItem.getUrl() : ""
-                };
-                oModel.create("/AddAttachmentsSet", oPayload, {
-                    success: function () { iOk++; if (--iPending === 0) { fnDone(); } },
-                    error: function () { iErr++; if (--iPending === 0) { fnDone(); } }
+                that._fileToBase64(oFile).then(function (sBase64) {
+                    var oPayload = {
+                        ObjKey: oItemHdr.ObjKey || "",
+                        Destination: oItemHdr.Destination || "",
+                        Filename: oUSItem.getFileName ? oUSItem.getFileName() : "",
+                        FileSize: iSize,
+                        TypeObj: sTypeObj,
+                        MimeType: sMedia,
+                        Value: sBase64 || ""
+                    };
+                    oModel.create("/AddAtachmentsSet", oPayload, {
+                        success: function () { iOk++; if (--iPending === 0) { fnDone(); } },
+                        error: function () { iErr++; if (--iPending === 0) { fnDone(); } }
+                    });
+                }).catch(function () {
+                    // Conversion error
+                    iErr++; if (--iPending === 0) { fnDone(); }
                 });
             });
         },
@@ -75,56 +142,108 @@ sap.ui.define([
         onAssignTypeToSelected: function () {
             var oUploadSet = this.byId("idUploadSet");
             if (!oUploadSet) { return; }
-            var aSel = oUploadSet.getSelectedItems ? oUploadSet.getSelectedItems() : [];
-            var oUSItem = aSel && aSel.length ? aSel[0] : null;
-            if (!oUSItem) {
-                // Fallback: use the last added item if nothing is selected
-                var aItems = oUploadSet.getItems ? oUploadSet.getItems() : [];
-                if (aItems && aItems.length) {
-                    oUSItem = aItems[aItems.length - 1];
-                } else {
-                    this.showMessage("No hay ficheros en la lista");
-                    return;
-                }
-            }
+            var aItems = oUploadSet.getItems ? oUploadSet.getItems() : [];
+            if (!aItems || !aItems.length) { this.showMessage("No hay ficheros en la lista"); return; }
+
+            var aFiles = aItems.map(function (oUSItem, idx) {
+                var oFile = oUSItem.getFileObject && oUSItem.getFileObject();
+                var iSize = (oFile && oFile.size) || 0;
+                var sTypeObj = ""; var sDesc = "";
+                var aAttrs = oUSItem.getAttributes ? oUSItem.getAttributes() : [];
+                aAttrs.forEach(function (oAttr) {
+                    var sTitle = oAttr.getTitle && oAttr.getTitle();
+                    if (sTitle === "Tipo de Objeto") { sTypeObj = oAttr.getText(); }
+                    if (sTitle === "Descripción") { sDesc = oAttr.getText(); }
+                });
+                return {
+                    index: idx,
+                    fileName: oUSItem.getFileName ? oUSItem.getFileName() : "",
+                    size: iSize,
+                    typeObj: sTypeObj,
+                    typeDesc: sDesc
+                };
+            });
+
             var that = this;
-            // Build or reuse a simple popover list for object types
-            if (!this._objectTypePopover) {
-                this._objectTypePopoverList = new sap.m.List({
+            var openDialog = function () {
+                if (!that._assignTypesDialog) { return; }
+                if (!that._assignTypesModel) { that._assignTypesModel = new sap.ui.model.json.JSONModel(); }
+                that._assignTypesModel.setData({ files: aFiles });
+                that._assignTypesDialog.setModel(that._assignTypesModel, "assignTypes");
+                that.getView().addDependent(that._assignTypesDialog);
+                that._assignTypesDialog.open();
+            };
+
+            if (!this._assignTypesDialog) {
+                Fragment.load({ name: "zui5cadoclist.view.fragments.AssignTypesDialog", controller: this }).then(function (oDialog) {
+                    that._assignTypesDialog = oDialog;
+                    openDialog();
+                });
+            } else {
+                openDialog();
+            }
+        },
+
+        onRowObjectTypeValueHelp: function (oEvent) {
+            var oSrc = oEvent && oEvent.getSource ? oEvent.getSource() : null;
+            if (!oSrc) { return; }
+            var oCtx = oSrc.getBindingContext("assignTypes");
+            if (!oCtx) { return; }
+            var sPath = oCtx.getPath(); // e.g., /files/0
+            var that = this;
+            if (!this._rowTypePopover) {
+                this._rowTypePopoverList = new sap.m.List({
                     noDataText: "No hay tipos de objeto disponibles",
                     items: { path: "/items", template: new sap.m.StandardListItem({ title: "{text}", description: "{key}", type: "Active" }) }
                 });
-                this._objectTypePopover = new sap.m.Popover({ showHeader: false, content: [this._objectTypePopoverList], placement: "Bottom" });
-                this._objectTypePopoverList.attachItemPress(function (oEvt) {
+                this._rowTypePopover = new sap.m.Popover({ showHeader: false, content: [this._rowTypePopoverList], placement: "Bottom" });
+                this._rowTypePopoverList.attachItemPress(function (oEvt) {
                     var oLI = oEvt.getParameter('listItem');
-                    var oCtx = oLI && oLI.getBindingContext();
-                    var sKey = oCtx ? oCtx.getProperty('key') : "";
-                    var sText = oCtx ? oCtx.getProperty('text') : "";
-                    // Update UploadSetItem attributes
-                    var aAttrs = oUSItem.getAttributes ? oUSItem.getAttributes() : [];
-                    aAttrs.forEach(function (oAttr) {
-                        var sTitle = oAttr.getTitle && oAttr.getTitle();
-                        if (sTitle === "Tipo de Objeto") { oAttr.setText(sKey); }
-                        if (sTitle === "Descripción") { oAttr.setText(sText || sKey); }
-                    });
-                    that._objectTypePopover.close();
+                    var oBCtx = oLI && oLI.getBindingContext();
+                    var sKey = oBCtx ? oBCtx.getProperty('key') : "";
+                    var sText = oBCtx ? oBCtx.getProperty('text') : "";
+                    if (that._assignTypesModel && that._currentRowPath) {
+                        that._assignTypesModel.setProperty(that._currentRowPath + "/typeObj", sKey);
+                        that._assignTypesModel.setProperty(that._currentRowPath + "/typeDesc", sText || sKey);
+                    }
+                    that._rowTypePopover.close();
                 });
             }
+            this._currentRowPath = sPath;
             var oModel = this.getOwnerComponent().getModel();
             oModel.read('/ObjectTypeSet', {
                 success: function (oData) {
                     var a = oData && oData.results ? oData.results : [];
                     var aItems = a.map(function (o) { return { key: o.TypeObj || o.typeobj || '', text: o.Description || o.description || '' }; });
                     var oListModel = new sap.ui.model.json.JSONModel({ items: aItems });
-                    that._objectTypePopoverList.setModel(oListModel);
-                    that._objectTypePopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
-                    // Open at toolbar button if available; else center
-                    var oBtn = that.byId('idUSAssignTypeBtn');
-                    if (oBtn) { that._objectTypePopover.openBy(oBtn); }
-                    else { that._objectTypePopover.open(); }
+                    that._rowTypePopoverList.setModel(oListModel);
+                    that._rowTypePopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
+                    that._rowTypePopover.openBy(oSrc);
                 },
                 error: function () { that.showErrorMessage('No se pudieron obtener los tipos de objeto'); }
             });
+        },
+
+        onAssignTypesDialogApply: function () {
+            if (!this._assignTypesModel) { if (this._assignTypesDialog) { this._assignTypesDialog.close(); } return; }
+            var aFiles = (this._assignTypesModel.getData() || {}).files || [];
+            var oUploadSet = this.byId("idUploadSet");
+            var aUSItems = oUploadSet ? oUploadSet.getItems() : [];
+            aFiles.forEach(function (f) {
+                var oUSItem = aUSItems[f.index];
+                if (!oUSItem) { return; }
+                var aAttrs = oUSItem.getAttributes ? oUSItem.getAttributes() : [];
+                aAttrs.forEach(function (oAttr) {
+                    var sTitle = oAttr.getTitle && oAttr.getTitle();
+                    if (sTitle === "Tipo de Objeto") { oAttr.setText(f.typeObj || ""); }
+                    if (sTitle === "Descripción") { oAttr.setText(f.typeDesc || f.typeObj || ""); }
+                });
+            });
+            if (this._assignTypesDialog) { this._assignTypesDialog.close(); }
+        },
+
+        onAssignTypesDialogCancel: function () {
+            if (this._assignTypesDialog) { this._assignTypesDialog.close(); }
         },
         onUploadSetItemRemoved: function (/*oEvent*/) {
             // No additional sync needed as we rely on UploadSet internal items only
@@ -156,7 +275,7 @@ sap.ui.define([
                             success: function (oResult) {
                                 var aFields = [];
                                 if (oResult && oResult.results) {
-                                    aFields = oResult.results.map(function (o) { return { field: o.Field_id || o.FieldId || o.Field || "", description: o.Description || "", table: o.Table || "", tableField: o.TableField || "", type: o.Type || "", length: o.Length || "" }; });
+                                    aFields = oResult.results.map(function (o) { return { field: o.Field_id, description: o.Description, table: o.Table, tableField: o.TableField, type: o.Type, length: o.Length }; });
                                 }
                                 that._openDynamicEditDialog(oData, aFields);
                             },
@@ -171,7 +290,7 @@ sap.ui.define([
             oModel.read('/DestinationAssignSet', {
                 success: function (oData) {
                     var a = oData && oData.results ? oData.results : [];
-                    var aItems = a.map(function (o) { return { key: o.Destination || o.Key || o.Id || o.Name || '', text: o.Description || o.Destination || o.Name || o.Key || '' }; });
+                    var aItems = a.map(function (o) { return { key: o.Destination, text: o.Description }; });
                     var oListModel = new sap.ui.model.json.JSONModel({ items: aItems });
                     that._destinationPopoverList.setModel(oListModel);
                     that._destinationPopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
@@ -193,7 +312,7 @@ sap.ui.define([
                 success: function (oResult) {
                     var aFields = [];
                     if (oResult && oResult.results) {
-                        aFields = oResult.results.map(function (o) { return { field: o.Field_id || o.FieldId || o.Field || "", description: o.Description || "", table: o.Table || "", tableField: o.TableField || "", type: o.Type || "", length: o.Length || "" }; });
+                        aFields = oResult.results.map(function (o) { return { field: o.Field_id, description: o.Description, table: o.Table, tableField: o.TableField, type: o.Type, length: o.Length }; });
                     }
                     that._openDynamicEditDialog(oItem, aFields);
                 },

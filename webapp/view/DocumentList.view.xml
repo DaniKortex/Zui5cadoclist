@@ -47,6 +47,12 @@
                 visibleRowCountMode="Auto"
                 rowActionCount="1"
             >
+                <table:rowSettingsTemplate>
+                    <table:RowSettings
+                        id="idDocumentsTableRowSettings"
+                        highlight="{ path: 'Error', formatter: '.formatRowHighlight' }"
+                    />
+                </table:rowSettingsTemplate>
                 <table:rowActionTemplate>
                     <table:RowAction id="idDocumentsTableRowAction">
                         <table:items>
@@ -103,6 +109,7 @@
                     <table:Column
                         id="idFileNameColumn"
                         width="16rem"
+                        sortProperty="FileName"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -122,6 +129,7 @@
                     <table:Column
                         id="idDestinationColumn"
                         width="10rem"
+                        sortProperty="Destination"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -141,6 +149,7 @@
                     <table:Column
                         id="idObjectDescColumn"
                         width="9rem"
+                        sortProperty="ObjectDescription"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -161,6 +170,7 @@
                     <table:Column
                         id="idObjKeyColumn"
                         width="12rem"
+                        sortProperty="ObjKey"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -180,6 +190,7 @@
                     <table:Column
                         id="idUsernameColumn"
                         width="8rem"
+                        sortProperty="Username"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -220,6 +231,7 @@
                         id="idErrorColumn"
                         width="5rem"
                         visible="false"
+                        sortProperty="Error"
                         resizable="true"
                         autoResizable="true"
                     >
@@ -271,6 +283,7 @@
                     <table:Column
                         id="idStatusColumn"
                         width="6rem"
+                        sortProperty="Error"
                         resizable="true"
                         autoResizable="true"
                     >

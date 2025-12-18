@@ -258,22 +258,54 @@ sap.ui.define([
             var that = this;
             var oModel = this.getOwnerComponent().getModel();
             oModel.create("/DestinationAssignSet", oDeepPayload, {
-                success: function () {
+                success: function (oResponseData) {
                     try {
-                        var oCurrent = oDialog.getModel("editDynamic").getData();
+                        var oEditDynModel = oDialog.getModel("editDynamic");
+                        var oCurrent = oEditDynModel.getData();
+                        // Map server-provided InputValue back into requiredFields using Field_id
+                        if (oResponseData && oResponseData.NavRequiredFields && oResponseData.NavRequiredFields.results && Array.isArray(oResponseData.NavRequiredFields.results)) {
+                            var aServerFields = oResponseData.NavRequiredFields.results;
+                            // Build lookup by Field_id
+                            var mServerByFieldId = {};
+                            aServerFields.forEach(function (f) {
+                                var sFid = f.Field_id || f.FieldId || f.Field || "";
+                                if (sFid) { mServerByFieldId[String(sFid).toLowerCase()] = f.InputValue || ""; }
+                            });
+                            // Apply to requiredFields via _fieldMap original names
+                            if (oCurrent._fieldMap && Array.isArray(oCurrent._fieldMap)) {
+                                oCurrent._fieldMap.forEach(function (m) {
+                                    var sOrig = m.original || "";
+                                    var sSrvVal = sOrig ? mServerByFieldId[String(sOrig).toLowerCase()] : undefined;
+                                    if (sSrvVal !== undefined) {
+                                        if (!oCurrent.requiredFields) { oCurrent.requiredFields = {}; }
+                                        oCurrent.requiredFields[m.key] = sSrvVal;
+                                    }
+                                });
+                            }
+                            // Update the editDynamic model so UI reflects mapped values
+                            oEditDynModel.setData(oCurrent);
+                        }
+                        // Build ObjKey from mapped requiredFields
                         var aParts = [];
-                        if (oCurrent._fieldMap && Array.isArray(oCurrent._fieldMap)) { oCurrent._fieldMap.forEach(function (m) { var val = (oCurrent.requiredFields && (m.key in oCurrent.requiredFields)) ? oCurrent.requiredFields[m.key] : ""; var sVal = (val != null && String(val).trim() !== "") ? String(val) : ""; aParts.push(sVal); }); }
+                        if (oCurrent._fieldMap && Array.isArray(oCurrent._fieldMap)) {
+                            oCurrent._fieldMap.forEach(function (m) {
+                                var val = (oCurrent.requiredFields && (m.key in oCurrent.requiredFields)) ? oCurrent.requiredFields[m.key] : "";
+                                var sVal = (val != null && String(val).trim() !== "") ? String(val) : "";
+                                aParts.push(sVal);
+                            });
+                        }
                         var sObjKey = aParts.join("") || (oCurrent.ObjKey || "");
                         if (sObjKey.length > 70) { sObjKey = sObjKey.substring(0, 70); }
                         var oItemModel = that.getView().getModel('item');
                         var oItem = oItemModel.getData() || {};
                         oItem.ObjKey = sObjKey;
-                        oItem.Destination = oCurrent.Destination || oItem.Destination;
+                        // Prefer Destination from response if present, else current
+                        oItem.Destination = (oResponseData && oResponseData.Destination) ? oResponseData.Destination : (oCurrent.Destination || oItem.Destination);
                         oItem._pendingUpdate = { ObjKey: sObjKey, Destination: oItem.Destination };
                         oItem._validated = true;
                         oItemModel.setData(oItem);
                         try { oDialog.close(); } catch (e) { }
-                        that.showSuccessMessage('Validación correcta. Revise los datos y pulse "Actualizar" para aplicar.');
+                        that.showSuccessMessage('Validación correcta');
                     } catch (e) {
                         that.showErrorMessage("Error preparando la actualización: " + (e.message || e));
                     }

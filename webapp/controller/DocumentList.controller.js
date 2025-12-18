@@ -40,6 +40,19 @@ sap.ui.define([
             },
 
             /**
+             * Row highlight based on Error: 'E' -> Error (red), 'P' -> Warning (yellow), else None
+             */
+            formatRowHighlight: function (vError) {
+                try {
+                    if (vError === null || vError === undefined) { return 'None'; }
+                    var s = String(vError).trim().toUpperCase();
+                    if (s.indexOf('E') !== -1) { return 'Error'; }
+                    if (s.indexOf('P') !== -1) { return 'Warning'; }
+                    return 'Success';
+                } catch (e) { return 'None'; }
+            },
+
+            /**
              * Formatter para mostrar el texto de Destino. Si está vacío, mostrar 'Indicar destino'
              */
             formatDestinationText: function (v) {
@@ -542,7 +555,7 @@ sap.ui.define([
                                             var aFields = [];
                                             if (oResult && oResult.results) {
                                                 aFields = oResult.results.map(function (o) {
-                                                    return { field: o.Field_id || o.FieldId || o.Field || '', description: o.Description || '', table: o.Table || '', tableField: o.TableField || '', type: o.Type || '', length: o.Length || '' };
+                                                    return { field: o.Field_id, description: o.Description, table: o.Table, tableField: o.TableField, type: o.Type, length: o.Length };
                                                 });
                                             }
                                             that._openDynamicEditDialog(oRowData, aFields);
@@ -595,12 +608,13 @@ sap.ui.define([
                             // Map server properties exactly (metadata: Field_id, Table, TableField, Type, Description, Length)
                             aFields = oResult.results.map(function (o) {
                                 return {
-                                    field: o.Field_id || o.FieldId || o.Field || "",
-                                    description: o.Description || "",
-                                    table: o.Table || "",
-                                    tableField: o.TableField || "",
-                                    type: o.Type || "",
-                                    length: o.Length || ""
+                                    field: o.Field_id,
+                                    description: o.Description,
+                                    table: o.Table,
+                                    tableField: o.TableField,
+                                    type: o.Type,
+                                    length: o.Length,
+
                                 };
                             });
                         }
@@ -703,12 +717,12 @@ sap.ui.define([
                         var value = (oDataModel.requiredFields && (m.key in oDataModel.requiredFields)) ? oDataModel.requiredFields[m.key] : "";
                         var sValue = (value != null && String(value).trim() !== "") ? String(value) : "SIN ASIGNAR";
                         aChildren.push({
-                            Destination: this._sDestination || "",
-                            Field_id: m.original || "",
-                            Table: m.table || "",
-                            TableField: m.tableField || m.original || "",
-                            Type: m.type || "",
-                            Description: m.description || "",
+                            Destination: this._sDestination,
+                            Field_id: m.original,
+                            Table: m.table,
+                            TableField: m.tableField,
+                            Type: m.type,
+                            Description: m.description,
                             Length: m.length || ((sValue) ? String(sValue.length) : ""),
                             InputValue: sValue
                         });
