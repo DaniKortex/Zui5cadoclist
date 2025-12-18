@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "3.1"
+metadata:
+  name: zui5cadoclist
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertErrors: true
+        level: 5
+        target:
+          url: https://s4hanade.ferrergrupo.inet
+          client: '500'
+        app:
+          name: ZUI5CADOCLIST
+          description: Listado documentos escaneados
+          package: ZCA_DOCS
+          transport: FHDK932615
+        exclude:
+          - /test/
