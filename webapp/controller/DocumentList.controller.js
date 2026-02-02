@@ -397,6 +397,48 @@ sap.ui.define([
             },
 
             /**
+             * Export table data to Excel using sap.ui.export.Spreadsheet
+             * Uses the table `rows` binding as dataSource and `createColumnConfig` for columns.
+             */
+            onExport: function () {
+                if (!this._oTable) {
+                    this._oTable = this.byId("idDocumentsTable");
+                }
+                var oTable = this._oTable;
+                if (!oTable) {
+                    this.showErrorMessage && this.showErrorMessage("Tabla no encontrada para exportar.");
+                    return;
+                }
+
+                var oRowBinding = oTable.getBinding("rows");
+                if (!oRowBinding) {
+                    this.showErrorMessage && this.showErrorMessage("No hay binding de filas para exportar.");
+                    return;
+                }
+
+                var aCols = this.createColumnConfig && this.createColumnConfig();
+
+                var that = this;
+                sap.ui.require(["sap/ui/export/Spreadsheet"], function (Spreadsheet) {
+                    var oSettings = {
+                        workbook: { columns: aCols },
+                        dataSource: oRowBinding,
+                        fileName: "ListadoDocumentos.xlsx",
+                        worker: false
+                    };
+
+                    var oSheet = new Spreadsheet(oSettings);
+                    oSheet.build().then(function () {
+                        that.showMessage && that.showMessage("Exportación completada");
+                    }).catch(function (oError) {
+                        that.showErrorMessage && that.showErrorMessage("Error al exportar a Excel: " + (oError && oError.message ? oError.message : oError));
+                    }).finally(function () {
+                        oSheet.destroy();
+                    });
+                });
+            },
+
+            /**
              * Debug method to check table state
              * @private
              */

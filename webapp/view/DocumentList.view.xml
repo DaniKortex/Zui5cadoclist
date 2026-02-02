@@ -77,11 +77,19 @@
                         />
 
                         <Button
+                            id="idExportButton"
+                            text="{i18n>export}"
+                            icon="sap-icon://excel-attachment"
+                            press=".onExport"
+                        />
+
+                        <!-- El refresh lo hacemosen el button IR de fiori
+                            <Button
                             id="idRefreshButton"
                             icon="sap-icon://refresh"
                             tooltip="{i18n>refresh}"
                             press=".onRefresh"
-                        />
+                        />-->
                     </OverflowToolbar>
                 </table:extension>
 
@@ -223,7 +231,7 @@
                         <table:template>
                             <Text
                                 id="idModifiedAtCellText"
-                                text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"
+                                text="{ path: 'ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy' } }"
                             />
                         </table:template>
                     </table:Column>

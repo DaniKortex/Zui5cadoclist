@@ -67,7 +67,7 @@
                 <Label text="Usuario" />
                 <Text text="{item>/Username}" />
 
-                <Label text="Fecha modificación" />
+                <Label text="{i18n>modifiedat}" />
                 <Text
                     text="{path: 'item>/ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy HH:mm' } }"
                 />
