@@ -31,6 +31,7 @@ sap.ui.define([
                     var s = String(vError).trim();
                     if (s === '') { return 'OK'; }
                     var sUpper = s.toUpperCase();
+                    if (sUpper.indexOf('D') !== -1) { return 'Eliminado'; }
                     if (sUpper.indexOf('P') !== -1) { return 'Pendiente'; }
                     if (sUpper.indexOf('E') !== -1) { return 'Error'; }
                     return 'OK';
@@ -46,6 +47,7 @@ sap.ui.define([
                 try {
                     if (vError === null || vError === undefined) { return 'None'; }
                     var s = String(vError).trim().toUpperCase();
+                    if (s.indexOf('D') !== -1) { return 'Information'; }
                     if (s.indexOf('E') !== -1) { return 'Error'; }
                     if (s.indexOf('P') !== -1) { return 'Warning'; }
                     return 'Success';
@@ -1199,6 +1201,7 @@ sap.ui.define([
                 var s = v.trim().toUpperCase();
                 if (s.indexOf('E') !== -1) { return "Error"; }
                 if (s.indexOf('P') !== -1) { return "Warning"; }
+                if (s.indexOf('D') !== -1) { return "Information"; }
                 return "Success";
             },
 
@@ -1211,7 +1214,8 @@ sap.ui.define([
                 if (v === null || v === undefined) { return ""; }
                 if (typeof v !== 'string') { return ""; }
                 var s = v.trim().toUpperCase();
-                if (s.indexOf('E') !== -1) { return this.getResourceBundle().getText("error"); }
+                if (s.indexOf('D') !== -1) { return "Eliminado"; }
+                if (s.indexOf('E') !== -1) { return this.getResourceBundle().getText("Error"); }
                 if (s.indexOf('P') !== -1) { return "Pendiente"; }
                 return "";
             },
