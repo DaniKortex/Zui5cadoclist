@@ -30,7 +30,20 @@
                     afterVariantLoad="onSFAfterVariantLoad"
                     assignedFiltersChanged="onSFBAssignedFiltersChanged"
                     search="onSmartFilterSearch"
-                />
+                >
+                    <smartFilterBar:controlConfiguration>
+                        <smartFilterBar:ControlConfiguration
+                            id="ccLogdateLSDESC"
+                            key="ModifiedAt"
+                            controlType="auto"
+                            filterType="interval"
+                            visible="true"
+                            visibleInAdvancedArea="false"
+                            index="0"
+                        />
+
+                    </smartFilterBar:controlConfiguration>
+                </smartFilterBar:SmartFilterBar>
             </f:DynamicPageHeader>
         </f:header>
         <f:content>

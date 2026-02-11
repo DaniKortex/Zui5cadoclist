@@ -16,7 +16,7 @@ builder:
         ignoreCertErrors: true
         level: 5
         target:
-          url: https://s4hanade.ferrergrupo.inet
+          url: http://eubcn1itsv005.ferrergrupo.inet:8000
           client: '500'
         app:
           name: ZUI5CADOCLIST

@@ -3,6 +3,9 @@
   <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
     <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
   </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+  </edmx:Reference>
   <edmx:Reference Uri="https://docs.oasis-open.org/odata/odata-v4.0-os/odata-v4.0-os-part3-csdl.xml">
     <edmx:Include Namespace="Org.OData.Core.V1" Alias="Core"/>
   </edmx:Reference>
@@ -11,7 +14,7 @@
     <edmx:Include Namespace="ZOD_CA_DOCUMENTS_SCAN_SRV"/>
   </edmx:Reference>
   <edmx:DataServices>
-    <Schema Namespace="ZOD_CA_DOCUMENTS_SCAN_SRV_ANN" xmlns="http://docs.oasis-open.org/odata/ns/edm" xmlns:UI="com.sap.vocabularies.UI.v1" xmlns:Core="Org.OData.Core.V1">
+    <Schema Namespace="ZOD_CA_DOCUMENTS_SCAN_SRV_ANN" xmlns="http://docs.oasis-open.org/odata/ns/edm" xmlns:UI="com.sap.vocabularies.UI.v1" xmlns:Core="Org.OData.Core.V1" xmlns:Common="com.sap.vocabularies.Common.v1">
       <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList">
         <Annotation Term="UI.LineItem">
           <Collection>
@@ -67,6 +70,73 @@
             </Record>
           </Collection>
         </Annotation>
+      </Annotations>
+
+      <!-- Value help for PdfList.Destination using DestinationAssignSet -->
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/Destination">
+        <Annotation Term="Common.ValueList">
+          <Record Type="Common.ValueListType">
+            <PropertyValue Property="CollectionPath" String="DestinationAssignSet" />
+            <PropertyValue Property="SearchSupported" Bool="true" />
+            <PropertyValue Property="Parameters">
+              <Collection>
+                <!-- Guardar en PdfList.Destination la descripción en español (Description) -->
+                <Record Type="Common.ValueListParameterInOut">
+                  <PropertyValue Property="LocalDataProperty" PropertyPath="Destination" />
+                  <PropertyValue Property="ValueListProperty" String="Description" />
+                </Record>
+                <!-- Mostrar también el código técnico Destination en el diálogo -->
+                <Record Type="Common.ValueListParameterDisplayOnly">
+                  <PropertyValue Property="ValueListProperty" String="Destination" />
+                </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+      </Annotations>
+
+      <!-- Value help for PdfList.ObjectDescription using ObjectTypeSet -->
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/TypeDoc">
+        <Annotation Term="Common.ValueList">
+          <Record Type="Common.ValueListType">
+            <PropertyValue Property="CollectionPath" String="ObjectTypeSet" />
+            <PropertyValue Property="SearchSupported" Bool="true" />
+            <PropertyValue Property="Parameters">
+              <Collection>
+                <!-- Bind ObjectDescription as in/out parameter to Description -->
+                <Record Type="Common.ValueListParameterInOut">
+                <PropertyValue Property="LocalDataProperty" PropertyPath="TypeDoc" />
+                <PropertyValue Property="ValueListProperty" String="TypeObj" />
+                </Record>
+                <!-- Show technical object type as additional info -->
+                <Record Type="Common.ValueListParameterDisplayOnly">
+                   
+                  <PropertyValue Property="ValueListProperty" String="Description" />
+                </Record>
+              </Collection>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+      </Annotations>
+
+      <!-- Hide unwanted filters Pdf, TypeObj and Status -->
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/Pdf">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
+      </Annotations>
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/TypeObj">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
+      </Annotations>
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/Status">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
+      </Annotations>
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/MimeType">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
+      </Annotations>
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/ErrorMessage">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
+      </Annotations>
+      <Annotations Target="ZOD_CA_DOCUMENTS_SCAN_SRV.PdfList/ObjectDescription">
+        <Annotation Term="UI.HiddenFilter" Bool="true" />
       </Annotations>
     </Schema>
   </edmx:DataServices>

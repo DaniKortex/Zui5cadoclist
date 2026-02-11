@@ -31,9 +31,9 @@ sap.ui.define([
                     var s = String(vError).trim();
                     if (s === '') { return 'OK'; }
                     var sUpper = s.toUpperCase();
-                    if (sUpper.indexOf('D') !== -1) { return 'Eliminado'; }
-                    if (sUpper.indexOf('P') !== -1) { return 'Pendiente'; }
-                    if (sUpper.indexOf('E') !== -1) { return 'Error'; }
+                    if (sUpper.indexOf('D') !== -1) { return 'Eliminado (D)'; }
+                    if (sUpper.indexOf('P') !== -1) { return 'Pendiente (P)'; }
+                    if (sUpper.indexOf('E') !== -1) { return 'Error (E)'; }
                     return 'OK';
                 } catch (e) {
                     return 'OK';
@@ -129,93 +129,17 @@ sap.ui.define([
             },
 
             /**
-             * SmartFilterBar initialized handler: attach valueHelpRequest for Destination filter
-             * Also attaches to the condition dialog inputs when it opens so the same value-help
-             * popover is shown anchored to the dialog's value input.
+             * SmartFilterBar initialized handler.
+             * A partir de las anotaciones (Common.ValueList) el value help de Destination
+             * lo gestiona directamente el SmartFilterBar, por lo que aquí ya no se engancha
+             * manualmente onDestinationValueHelp como en DocumentItemEdit.
              */
             onSFBInitialized: function (oEvent) {
-                var that = this;
+                // Mantener el handler por si en el futuro se quiere añadir lógica específica,
+                // pero sin modificar el value help proporcionado por las anotaciones.
                 var oSFB = oEvent && oEvent.getSource ? oEvent.getSource() : this.byId("idSmartFilterBar");
                 if (!oSFB) { return; }
-
-                var fnAttachToFilterControl = function () {
-                    try {
-                        var oControl = null;
-                        if (typeof oSFB.getControlByKey === 'function') {
-                            oControl = oSFB.getControlByKey("Destination");
-                        }
-                        if (!oControl && typeof oSFB.getAllFilterItems === 'function') {
-                            var aItems = oSFB.getAllFilterItems();
-                            for (var i = 0; i < aItems.length; i++) {
-                                var oFI = aItems[i];
-                                if (oFI && typeof oFI.getName === 'function' && oFI.getName() === 'Destination') {
-                                    if (typeof oFI.getControl === 'function') { oControl = oFI.getControl(); }
-                                    break;
-                                }
-                            }
-                        }
-                        if (oControl && typeof oControl.attachValueHelpRequest === 'function') {
-                            try { oControl.detachValueHelpRequest(that.onDestinationValueHelp, that); } catch (e) { /* ignore */ }
-                            oControl.attachValueHelpRequest(that.onDestinationValueHelp, that);
-                        }
-                    } catch (e) { /* ignore */ }
-                };
-
-                var fnAttachToDialogInputs = function () {
-                    try {
-                        var oDialog = oSFB._oFilterDialog;
-                        if (!oDialog || typeof oDialog.attachAfterOpen !== 'function') return;
-                        // Ensure we attach only once
-                        if (oDialog._destinationAttached) return;
-                        oDialog._destinationAttached = true;
-
-                        oDialog.attachAfterOpen(function () {
-                            try {
-                                var fnTraverse = function (oCtrl) {
-                                    var aFound = [];
-                                    if (!oCtrl) return aFound;
-                                    var sName = oCtrl.getMetadata && oCtrl.getMetadata().getName && oCtrl.getMetadata().getName();
-                                    if (sName === 'sap.m.Input' || sName === 'sap.m.MultiInput') {
-                                        var oBind = oCtrl.getBindingInfo && oCtrl.getBindingInfo('value');
-                                        if (oBind && oBind.parts) {
-                                            for (var j = 0; j < oBind.parts.length; j++) {
-                                                var p = oBind.parts[j];
-                                                if (p && p.path && p.path.indexOf('Destination') !== -1) {
-                                                    aFound.push(oCtrl); break;
-                                                }
-                                            }
-                                        } else {
-                                            var sId = oCtrl.getId && oCtrl.getId();
-                                            if (sId && sId.toLowerCase().indexOf('destination') !== -1) aFound.push(oCtrl);
-                                        }
-                                    }
-                                    var m = oCtrl.getMetadata && oCtrl.getMetadata().getAllAggregations && oCtrl.getMetadata().getAllAggregations();
-                                    if (m) {
-                                        for (var agg in m) {
-                                            var oAgg = oCtrl.getAggregation && oCtrl.getAggregation(agg);
-                                            if (Array.isArray(oAgg)) {
-                                                for (var k = 0; k < oAgg.length; k++) { aFound = aFound.concat(fnTraverse(oAgg[k])); }
-                                            } else if (oAgg) { aFound = aFound.concat(fnTraverse(oAgg)); }
-                                        }
-                                    }
-                                    return aFound;
-                                };
-
-                                var aInputs = fnTraverse(oDialog);
-                                aInputs.forEach(function (oInput) {
-                                    try { oInput.detachValueHelpRequest(that.onDestinationValueHelp, that); } catch (e) { /* ignore */ }
-                                    if (typeof oInput.attachValueHelpRequest === 'function') {
-                                        oInput.attachValueHelpRequest(that.onDestinationValueHelp, that);
-                                    }
-                                });
-                            } catch (e) { /* ignore */ }
-                        });
-                    } catch (e) { /* ignore */ }
-                };
-
-                // Try to attach immediately and after a short delay to cover async creation
-                fnAttachToFilterControl();
-                setTimeout(function () { fnAttachToFilterControl(); fnAttachToDialogInputs(); }, 500);
+                // Nada más que hacer: ValueList se encarga del value help.
             },
 
             /**

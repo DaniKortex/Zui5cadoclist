@@ -69,7 +69,7 @@
 
                 <Label text="{i18n>modifiedat}" />
                     <Text
-                        text="{path: 'item>/ModifiedAt', type: 'sap.ui.model.odata.type.DateTime', formatOptions: { pattern: 'dd.MM.yyyy' } }"
+                        text="{path: 'item>/ModifiedAt', type: 'sap.ui.model.odata.type.Date', formatOptions: { pattern: 'dd.MM.yyyy' } }"
                     />
             </layout:SimpleForm>
 
