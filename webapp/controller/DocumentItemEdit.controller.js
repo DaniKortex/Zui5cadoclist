@@ -178,7 +178,7 @@ sap.ui.define([
                     var aItems = a.map(function (o) { return { key: o.Destination || o.Key || o.Id || o.Name || '', text: o.Description || o.Destination || o.Name || o.Key || '' }; });
                     var oListModel = new JSONModel({ items: aItems });
                     that._destinationPopoverList.setModel(oListModel);
-                    that._destinationPopoverList.bindItems({ path: '/items', template: new StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
+                    that._destinationPopoverList.bindItems({ path: '/items', template: new StandardListItem({ title: '{text}', type: 'Active' }) });
                     that._destinationPopover.openBy(oSource);
                 },
                 error: function () { that.showErrorMessage('No se pudieron obtener los destinos'); }

@@ -217,7 +217,7 @@ sap.ui.define([
                     var aItems = a.map(function (o) { return { key: o.TypeObj || o.typeobj || '', text: o.Description || o.description || '' }; });
                     var oListModel = new sap.ui.model.json.JSONModel({ items: aItems });
                     that._rowTypePopoverList.setModel(oListModel);
-                    that._rowTypePopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
+                    that._rowTypePopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', type: 'Active' }) });
                     that._rowTypePopover.openBy(oSrc);
                 },
                 error: function () { that.showErrorMessage('No se pudieron obtener los tipos de objeto'); }
@@ -236,7 +236,7 @@ sap.ui.define([
                 aAttrs.forEach(function (oAttr) {
                     var sTitle = oAttr.getTitle && oAttr.getTitle();
                     if (sTitle === "Tipo de Objeto") { oAttr.setText(f.typeObj || ""); }
-                    if (sTitle === "Descripción") { oAttr.setText(f.typeDesc || f.typeObj || ""); }
+                    //if (sTitle === "Descripción") { oAttr.setText(f.typeDesc || f.typeObj || ""); }
                 });
             });
             if (this._assignTypesDialog) { this._assignTypesDialog.close(); }
@@ -293,7 +293,7 @@ sap.ui.define([
                     var aItems = a.map(function (o) { return { key: o.Destination, text: o.Description }; });
                     var oListModel = new sap.ui.model.json.JSONModel({ items: aItems });
                     that._destinationPopoverList.setModel(oListModel);
-                    that._destinationPopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}', description: '{key}', type: 'Active' }) });
+                    that._destinationPopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}',  type: 'Active' }) });
                     if (oSource) { that._destinationPopover.openBy(oSource); }
                 },
                 error: function () { that.showErrorMessage('No se pudieron obtener los destinos'); }
