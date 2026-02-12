@@ -264,11 +264,15 @@ sap.ui.define([
                 this._destinationPopover = new sap.m.Popover({ showHeader: false, content: [this._destinationPopoverList], placement: "Bottom" });
                 this._destinationPopoverList.attachItemPress(function (oEvt) {
                     var oItem = oEvt.getParameter('listItem'); if (!oItem) { return; }
-                    var oCtx = oItem.getBindingContext(); var sKey = oCtx ? oCtx.getProperty('key') : null;
+                    var oCtx = oItem.getBindingContext();
+                    var sKey = oCtx ? oCtx.getProperty('key') : null;
+                    var sText = oCtx ? oCtx.getProperty('text') : null;
                     if (sKey) {
                         var oItemModel = that.getView().getModel('item');
                         var oData = oItemModel.getData() || {};
+                        // Usar la key para la validación y guardar el texto para mostrarlo tras validar
                         oData.Destination = sKey;
+                        oData._destinationText = sText || sKey;
                         oItemModel.setData(oData);
                         that.getOwnerComponent().getModel().read('/RequiredFieldsSet', {
                             filters: [new sap.ui.model.Filter('Destination', sap.ui.model.FilterOperator.EQ, sKey)],
