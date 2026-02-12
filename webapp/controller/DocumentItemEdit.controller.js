@@ -145,12 +145,16 @@ sap.ui.define([
                 this._destinationPopover = new Popover({ showHeader: false, content: [this._destinationPopoverList], placement: "Bottom" });
                 this._destinationPopoverList.attachItemPress(function (oEvt) {
                     var oItem = oEvt.getParameter('listItem'); if (!oItem) { return; }
-                    var oCtx = oItem.getBindingContext(); var sKey = oCtx ? oCtx.getProperty('key') : null;
+                    var oCtx = oItem.getBindingContext();
+                    var sKey = oCtx ? oCtx.getProperty('key') : null;
+                    var sText = oCtx ? oCtx.getProperty('text') : null;
                     if (sKey) {
-                        // set destination on single item model
+                        // set destination on single item model with key for validation
                         var oItemModel = that.getView().getModel('item');
                         var oData = oItemModel.getData() || {};
                         oData.Destination = sKey;
+                        // remember display text so it can be stored after validation
+                        oData._destinationText = sText || sKey;
                         oItemModel.setData(oData);
                         // After selecting destination, fetch required fields and open dynamic dialog
                         that.getOwnerComponent().getModel().read('/RequiredFieldsSet', {

@@ -299,8 +299,14 @@ sap.ui.define([
                         var oItemModel = that.getView().getModel('item');
                         var oItem = oItemModel.getData() || {};
                         oItem.ObjKey = sObjKey;
-                        // Prefer Destination from response if present, else current
-                        oItem.Destination = (oResponseData && oResponseData.Destination) ? oResponseData.Destination : (oCurrent.Destination || oItem.Destination);
+                        // For DocumentItemEdit, if we stored a display text, use it as final Destination; otherwise keep existing behavior
+                        var sControllerName = that.getMetadata && that.getMetadata().getName && that.getMetadata().getName();
+                        if (sControllerName === "zui5cadoclist.controller.DocumentItemEdit" && oItem._destinationText) {
+                            oItem.Destination = oItem._destinationText;
+                        } else {
+                            // Prefer Destination from response if present, else current
+                            oItem.Destination = (oResponseData && oResponseData.Destination) ? oResponseData.Destination : (oCurrent.Destination || oItem.Destination);
+                        }
                         oItem._pendingUpdate = { ObjKey: sObjKey, Destination: oItem.Destination };
                         oItem._validated = true;
                         oItemModel.setData(oItem);
