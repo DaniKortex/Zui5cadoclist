@@ -981,6 +981,101 @@ sap.ui.define([
             },
 
             /**
+             * Event handler for row-level download button.
+             * Downloads the same PDF that is shown by the visualize button for that row.
+             * @param {sap.ui.base.Event} oEvent
+             */
+            onRowDownloadPress: function (oEvent) {
+                var oSource = oEvent.getSource();
+                if (!oSource) { return; }
+                var oBindingContext = oSource.getBindingContext();
+                if (!oBindingContext) {
+                    this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
+                    return;
+                }
+                var oItem = oBindingContext.getObject();
+                if (!oItem) {
+                    this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
+                    return;
+                }
+                var sDocId = oItem.DocId || oBindingContext.getProperty("DocId");
+                if (!sDocId) {
+                    this.showErrorMessage(this.getResourceBundle().getText("noDocumentSelected"));
+                    return;
+                }
+
+                var oModel = this.getModel();
+                var that = this;
+                var oViewModel = this.getModel("viewModel");
+                if (oViewModel) { oViewModel.setProperty("/busy", true); }
+
+                var sKey;
+                try {
+                    sKey = oModel.createKey("/PdfListSet", { DocId: sDocId });
+                } catch (e) {
+                    sKey = "/PdfListSet('" + encodeURIComponent(sDocId) + "')";
+                }
+
+                oModel.read(sKey, {
+                    success: function (oData) {
+                        if (oViewModel) { oViewModel.setProperty("/busy", false); }
+                        if (oData && (oData.Pdf || oData.Pdf === 0)) {
+                            // Convert Pdf to Blob URL and trigger download
+                            var toArrayBuffer = function (data) {
+                                if (!data) { return null; }
+                                if (data instanceof ArrayBuffer) { return data; }
+                                if (ArrayBuffer.isView && ArrayBuffer.isView(data)) { return data.buffer; }
+                                if (Array.isArray(data)) { return new Uint8Array(data).buffer; }
+                                if (typeof data === "string") {
+                                    try {
+                                        var binStr = atob(data.replace(/\s/g, "").replace(/-/g, "+"));
+                                        var len = binStr.length;
+                                        var bytes = new Uint8Array(len);
+                                        for (var i = 0; i < len; i++) { bytes[i] = binStr.charCodeAt(i); }
+                                        return bytes.buffer;
+                                    } catch (e) {
+                                        console.warn("No se pudo decodificar la cadena base64 proporcionada.");
+                                        return null;
+                                    }
+                                }
+                                return null;
+                            };
+
+                            var ab = toArrayBuffer(oData.Pdf);
+                            if (ab) {
+                                try {
+                                    var blob = new Blob([ab], { type: "application/pdf" });
+                                    var sBlobUrl = URL.createObjectURL(blob);
+                                    var link = document.createElement("a");
+                                    link.href = sBlobUrl;
+                                    link.download = oData.FileName || "document.pdf";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    if (URL && URL.revokeObjectURL) {
+                                        URL.revokeObjectURL(sBlobUrl);
+                                    }
+                                    that.showMessage(that.getResourceBundle().getText("downloadStarted", [oData.DocId]));
+                                } catch (e) {
+                                    console.error("Error creando Blob del PDF para descarga:", e);
+                                    that.showErrorMessage(that.getResourceBundle().getText("noPdfAvailable"));
+                                }
+                            } else {
+                                that.showErrorMessage(that.getResourceBundle().getText("noPdfAvailable"));
+                            }
+                        } else {
+                            that.showErrorMessage(that.getResourceBundle().getText("noPdfAvailable"));
+                        }
+                    },
+                    error: function (oError) {
+                        if (oViewModel) { oViewModel.setProperty("/busy", false); }
+                        console.error("Error reading PdfListSet entity for download:", oError);
+                        that.showErrorMessage(that.getResourceBundle().getText("noPdfAvailable"));
+                    }
+                });
+            },
+
+            /**
              * Navigate to detail edit page when DocId link is pressed
              */
             onDocIdPress: function (oEvent) {
@@ -1096,20 +1191,6 @@ sap.ui.define([
                     link.click();
                     document.body.removeChild(link);
                     this.showMessage(this.getResourceBundle().getText("downloadStarted", [oPdfData.docId]));
-                }
-            },
-            onDownloadDocument: function (oEvent) {
-                console.log("Download button clicked");
-                var oBindingContext = oEvent.getSource().getBindingContext();
-                if (oBindingContext) {
-                    var sDocId = oBindingContext.getProperty("DocId");
-                    var sPdf = oBindingContext.getProperty("Pdf");
-
-                    if (sPdf) {
-                        this.showMessage(this.getResourceBundle().getText("downloadStarted", [sDocId]));
-                    } else {
-                        this.showErrorMessage(this.getResourceBundle().getText("noPdfAvailable"));
-                    }
                 }
             },
 

@@ -292,11 +292,11 @@
                                     press=".onRowVisualizePress"
                                 />
                                 <Button
-                                    id="idDownloadButton"
+                                    id="idRowDownloadButton"
                                     icon="sap-icon://download"
                                     type="Transparent"
                                     tooltip="{i18n>download}"
-                                    press=".onDownloadDocument"
+                                    press=".onRowDownloadPress"
                                 />
                             </HBox>
                         </table:template>
