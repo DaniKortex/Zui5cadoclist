@@ -45,6 +45,27 @@ sap.ui.define([
             return !!(bErrorAllowed && bHasDestination);
         },
 
+        /**
+         * True when the selected Destination represents the "unassigned" option.
+         * We explicitly block it in DocumentItemEdit.
+         * @private
+         */
+        _isUnassignedDestination: function (sKey, sText) {
+            var normalize = function (v) {
+                return (typeof v === "string") ? v.trim().toUpperCase() : "";
+            };
+            var a = ["SIN ASIGNAR", "UNASSIGNED"];
+            return a.indexOf(normalize(sText)) !== -1 || a.indexOf(normalize(sKey)) !== -1;
+        },
+
+        /**
+         * Formatter for ObjKey edit button enabled state.
+         * Button is only enabled when Destination is present.
+         */
+        formatObjKeyEditEnabled: function (vDestination) {
+            return (typeof vDestination === "string" && vDestination.trim() !== "");
+        },
+
         _onRouteMatched: function (oEvent) {
             var sDocId = oEvent.getParameter && oEvent.getParameter("arguments") && oEvent.getParameter("arguments").DocId;
             if (!sDocId) { return; }
@@ -95,6 +116,10 @@ sap.ui.define([
         onSave: function () {
             var oItem = this.getView().getModel('item').getData();
             if (!oItem || !oItem.DocId) { this.showErrorMessage('Documento no válido'); return; }
+            if (this._isUnassignedDestination(oItem.Destination, oItem.Destination)) {
+                this.showErrorMessage("No se permite seleccionar 'SIN ASIGNAR' como destino");
+                return;
+            }
             var oModel = this.getOwnerComponent().getModel();
             var that = this;
             var sPath;
@@ -148,6 +173,14 @@ sap.ui.define([
                     var oCtx = oItem.getBindingContext();
                     var sKey = oCtx ? oCtx.getProperty('key') : null;
                     var sText = oCtx ? oCtx.getProperty('text') : null;
+
+                    // Explicitly block selecting "SIN ASIGNAR" from the value help.
+                    // Also prevents opening the "required fields" dialog for that pseudo-destination.
+                    if (that._isUnassignedDestination(sKey, sText)) {
+                        that._destinationPopover.close();
+                        return;
+                    }
+
                     if (sKey) {
                         // set destination on single item model with key for validation
                         var oItemModel = that.getView().getModel('item');
@@ -179,7 +212,16 @@ sap.ui.define([
             oModel.read('/DestinationAssignSet', {
                 success: function (oData) {
                     var a = oData && oData.results ? oData.results : [];
-                    var aItems = a.map(function (o) { return { key: o.Destination || o.Key || o.Id || o.Name || '', text: o.Description || o.Destination || o.Name || o.Key || '' }; });
+                    var aItems = a
+                        .map(function (o) {
+                            return {
+                                key: o.Destination || o.Key || o.Id || o.Name || '',
+                                text: o.Description || o.Destination || o.Name || o.Key || ''
+                            };
+                        })
+                        .filter(function (o) {
+                            return !that._isUnassignedDestination(o.key, o.text);
+                        });
                     var oListModel = new JSONModel({ items: aItems });
                     that._destinationPopoverList.setModel(oListModel);
                     that._destinationPopoverList.bindItems({ path: '/items', template: new StandardListItem({ title: '{text}', type: 'Active' }) });
@@ -248,14 +290,21 @@ sap.ui.define([
          * Handler para editar ObjKey: abrir diálogo dinámico con campos según Destination
          */
         onObjKeyLinkPress: function (oEvent) {
-            var oCtx = null;
-            var oSource = oEvent.getSource ? oEvent.getSource() : null;
             var oItem = this.getView().getModel('item').getData() || {};
             var sDestination = oItem.Destination;
             var that = this;
-            if (!this._errorAllowsEdit || !sDestination) {
-                // still allow if destination present
+
+            if (typeof sDestination !== "string" || sDestination.trim() === "") {
+                this.showErrorMessage("Selecciona un destino antes de editar la clave de objeto");
+                return;
             }
+
+            // Treat UNASSIGNED / SIN ASIGNAR as not informed for editing.
+            if (this._isUnassignedDestination(sDestination, oItem._destinationText)) {
+                this.showErrorMessage("Selecciona un destino válido antes de editar la clave de objeto");
+                return;
+            }
+
             this.getOwnerComponent().getModel().read('/RequiredFieldsSet', {
                 filters: [new Filter('Destination', FilterOperator.EQ, sDestination)],
                 success: function (oResult) {

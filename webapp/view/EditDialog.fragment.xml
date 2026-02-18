@@ -4,7 +4,7 @@
   <Label text="ID Documento" labelFor="docidInput"/>
   <Input id="docidInput" value="{edit>/DocId}" editable="false"/>
   <Label text="Destino" labelFor="destinationInput"/>
-  <Input id="destinationInput" value="{edit>/Destination}"/>
+  <Input id="destinationInput" value="{edit>/Destination}" showValueHelp="true" valueHelpOnly="true" valueHelpRequest="onDestinationValueHelp"/>
       <Label text="Tipo de Objeto" labelFor="typeobjInput"/>
       <Input id="typeobjInput" value="{edit>/TypeObj}"/>
       <Label text="Descripción" labelFor="descriptionInput"/>

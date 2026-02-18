@@ -7,6 +7,20 @@ sap.ui.define([
     "use strict";
 
     return BaseController.extend("zui5cadoclist.controller.AddAttachments", {
+
+        /**
+         * True when the selected Destination represents the "unassigned" option.
+         * We explicitly block it in AddAttachments.
+         * @private
+         */
+        _isUnassignedDestination: function (sKey, sText) {
+            var normalize = function (v) {
+                return (typeof v === "string") ? v.trim().toUpperCase() : "";
+            };
+            var a = ["SIN ASIGNAR", "UNASSIGNED"];
+            return a.indexOf(normalize(sText)) !== -1 || a.indexOf(normalize(sKey)) !== -1;
+        },
+
         _fileToBase64: function (oFile) {
             return new Promise(function (resolve, reject) {
                 if (!oFile) { resolve(null); return; }
@@ -46,6 +60,13 @@ sap.ui.define([
                 this.showErrorMessage("Debe indicar Destino y Clave del Objeto (ObjKey)");
                 return;
             }
+
+            // Block UNASSIGNED / SIN ASIGNAR
+            if (this._isUnassignedDestination(oItemHdr.Destination, oItemHdr._destinationText || oItemHdr.Destination)) {
+                this.showErrorMessage("No se permite seleccionar 'SIN ASIGNAR' como destino");
+                return;
+            }
+
             // Validate that all files have a Tipo de Objeto assigned
             var aMissingTypes = [];
             aItems.forEach(function (oUSItem) {
@@ -267,11 +288,20 @@ sap.ui.define([
                     var oCtx = oItem.getBindingContext();
                     var sKey = oCtx ? oCtx.getProperty('key') : null;
                     var sText = oCtx ? oCtx.getProperty('text') : null;
+
+                    // Explicitly block selecting "SIN ASIGNAR" from the value help.
+                    if (that._isUnassignedDestination(sKey, sText)) {
+                        that._destinationPopover.close();
+                        return;
+                    }
+
                     if (sKey) {
                         var oItemModel = that.getView().getModel('item');
                         var oData = oItemModel.getData() || {};
                         // Usar la key para la validación y guardar el texto para mostrarlo tras validar
                         oData.Destination = sKey;
+                        // Guardar también la key en una propiedad estable (Destination puede pasar a ser texto tras validar)
+                        oData._destinationKey = sKey;
                         oData._destinationText = sText || sKey;
                         oItemModel.setData(oData);
                         that.getOwnerComponent().getModel().read('/RequiredFieldsSet', {
@@ -279,7 +309,16 @@ sap.ui.define([
                             success: function (oResult) {
                                 var aFields = [];
                                 if (oResult && oResult.results) {
-                                    aFields = oResult.results.map(function (o) { return { field: o.Field_id, description: o.Description, table: o.Table, tableField: o.TableField, type: o.Type, length: o.Length }; });
+                                    aFields = oResult.results.map(function (o) {
+                                        return {
+                                            field: o.Field_id || o.FieldId || o.Field || "",
+                                            description: o.Description || "",
+                                            table: o.Table || "",
+                                            tableField: o.TableField || "",
+                                            type: o.Type || "",
+                                            length: o.Length || ""
+                                        };
+                                    });
                                 }
                                 that._openDynamicEditDialog(oData, aFields);
                             },
@@ -294,7 +333,16 @@ sap.ui.define([
             oModel.read('/DestinationAssignSet', {
                 success: function (oData) {
                     var a = oData && oData.results ? oData.results : [];
-                    var aItems = a.map(function (o) { return { key: o.Destination, text: o.Description }; });
+                    var aItems = a
+                        .map(function (o) {
+                            return {
+                                key: o.Destination || o.Key || o.Id || o.Name || '',
+                                text: o.Description || o.Destination || o.Name || o.Key || ''
+                            };
+                        })
+                        .filter(function (o) {
+                            return !that._isUnassignedDestination(o.key, o.text);
+                        });
                     var oListModel = new sap.ui.model.json.JSONModel({ items: aItems });
                     that._destinationPopoverList.setModel(oListModel);
                     that._destinationPopoverList.bindItems({ path: '/items', template: new sap.m.StandardListItem({ title: '{text}',  type: 'Active' }) });
@@ -305,18 +353,34 @@ sap.ui.define([
         },
         onObjKeyLinkPress: function () {
             var oItem = this.getView().getModel('item').getData() || {};
-            var sDestination = oItem.Destination;
+            var sDestination = oItem._destinationKey || oItem.Destination;
             var that = this;
             if (!sDestination || (typeof sDestination === 'string' && sDestination.trim() === '')) {
                 this.showMessage('Seleccione un destino antes de editar clave');
                 return;
             }
+
+            // Treat UNASSIGNED / SIN ASIGNAR as not informed for editing.
+            if (this._isUnassignedDestination(sDestination, oItem._destinationText)) {
+                this.showErrorMessage("Selecciona un destino válido antes de editar la clave de objeto");
+                return;
+            }
+
             this.getOwnerComponent().getModel().read('/RequiredFieldsSet', {
                 filters: [new sap.ui.model.Filter('Destination', sap.ui.model.FilterOperator.EQ, sDestination)],
                 success: function (oResult) {
                     var aFields = [];
                     if (oResult && oResult.results) {
-                        aFields = oResult.results.map(function (o) { return { field: o.Field_id, description: o.Description, table: o.Table, tableField: o.TableField, type: o.Type, length: o.Length }; });
+                        aFields = oResult.results.map(function (o) {
+                            return {
+                                field: o.Field_id || o.FieldId || o.Field || "",
+                                description: o.Description || "",
+                                table: o.Table || "",
+                                tableField: o.TableField || "",
+                                type: o.Type || "",
+                                length: o.Length || ""
+                            };
+                        });
                     }
                     that._openDynamicEditDialog(oItem, aFields);
                 },

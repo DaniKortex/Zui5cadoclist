@@ -82,6 +82,7 @@
                     id="idItemDestinationInput"
                     value="{item>/Destination}"
                     showValueHelp="true"
+                    valueHelpOnly="true"
                     valueHelpRequest="onDestinationValueHelp"
                     width="10rem"
                     editable="{ path: 'item>/Error', formatter: '.formatDestinationEditable' }"
@@ -98,6 +99,7 @@
                         type="Transparent"
                         tooltip="Editar clave"
                         press="onObjKeyLinkPress"
+                        enabled="{ path: 'item>/Destination', formatter: '.formatObjKeyEditEnabled' }"
                         visible="{ parts: [{path: 'item>/Error'}, {path: 'item>/ObjKey'}, {path: 'item>/Destination'}], formatter: '.formatEditVisible' }"
                     />
                 </HBox>

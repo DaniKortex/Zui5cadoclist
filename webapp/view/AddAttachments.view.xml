@@ -45,6 +45,7 @@
                                 id="idAddDestInput"
                                 value="{item>/Destination}"
                                 showValueHelp="true"
+                                valueHelpOnly="true"
                                 width="10rem"
                                 valueHelpRequest="onDestinationValueHelp"
                             />
